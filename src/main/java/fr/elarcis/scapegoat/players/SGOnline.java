@@ -110,12 +110,12 @@ public abstract class SGOnline
 
 	public static PlayerType getType(UUID player)
 	{
-		PlayerType type = sgOnlines.get(player).getType();
+		SGOnline online = sgOnlines.get(player);
 		
-		if (type == null)
+		if (online == null)
 			return PlayerType.UNKNOWN;
 		else
-			return type;
+			return online.getType();
 	}
 
 	public static void refeshScapegoatChunk()

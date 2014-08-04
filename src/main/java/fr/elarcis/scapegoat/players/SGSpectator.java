@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.Team;
 
 import fr.elarcis.scapegoat.ItemSet;
 
@@ -90,7 +91,9 @@ public class SGSpectator extends SGOnline
 
 			SkullMeta hMeta = (SkullMeta) head.getItemMeta();
 			hMeta.setOwner(p.getName());
-			hMeta.setDisplayName(plugin.getScoreboard().getPlayerTeam(p).getSuffix() + p.getName());
+		
+			Team t = plugin.getScoreboard().getPlayerTeam(p);
+			hMeta.setDisplayName(((t != null) ? t.getSuffix() : "") + p.getName());
 
 			List<String> lore = new ArrayList<String>();
 			lore.add(typeLore);

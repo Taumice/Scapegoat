@@ -258,122 +258,122 @@ public final class ScapegoatPlugin extends JavaPlugin
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
 	{
 		String lCmd = cmd.getName().toLowerCase();
-
 		UUID senderId = null;
+		String result = "Commande inconnue";
 
 		if (sender instanceof Player)
-		{
 			senderId = ((Player) sender).getUniqueId();
-		}
 
 		if (lCmd.equals("spectate"))
-		{
 			if (args.length == 2)
-			{
-				Player p = Bukkit.getPlayer(getUuid(args[0]));
-
-				if (p != null)
-				{
-					if (args[1].equalsIgnoreCase("on"))
-					{
-						if (SGOnline.getType(p.getUniqueId()) != PlayerType.SPECTATOR)
-						{
-							if (p.isOnline())
-								SGOnline.getSGPlayer(p.getUniqueId()).remove();
-							new SGSpectator(p);
-							return true;
-						}
-						else
-						{
-							sender.sendMessage("Ce joueur est déjà spectateur.");
-						}
-					}
-					else if (args[1].equalsIgnoreCase("off"))
-					{
-						if (SGOnline.getType(p.getUniqueId()) == PlayerType.SPECTATOR)
-						{
-							SGOnline.getSGSpectator(p.getUniqueId()).remove();
-							if (p.isOnline())
-								new SGPlayer(p.getPlayer());
-							return true;
-						}
-						else
-						{
-							sender.sendMessage("Ce joueur n'est pas spectateur.");
-						}
-					}
-					else
-					{
-						sender.sendMessage("Commande incorrecte.");
-					}
-				}
-				else
-				{
-					sender.sendMessage("Joueur introuvable.");
-				}
-			}
+				result = spectateCommand(args[0], args[1]);
 			else
-			{
-				sender.sendMessage("Mauvais nombre d'arguments !");
-			}
-		}
+				result = "Mauvais nombre d'arguments !";
 		else if (lCmd.equals("start"))
-		{
-			if (getGameStateType() == GameStateType.WAITING && SGOnline.getPlayerCount() >= 2)
-			{
-				setForceStart(true);
-				return true;
-			}
-			else
-				return false;
-		}
+			result = forceStartCommand();
 		else if (lCmd.equals("votemap") && senderId != null)
-		{
-			if (getGameStateType() == GameStateType.WAITING)
-			{
-				if (nVotemap.add(senderId))
-				{
-					Bukkit.broadcastMessage(ChatColor.GREEN + sender.getName() + ChatColor.YELLOW
-							+ " a demandé un changement de map !");
-					Bukkit.broadcastMessage(ChatColor.RED + "(" + nVotemap.size() + "/" + getVotemapsRequired()
-							+ " requis)");
-				}
-				else
-				{
-					sender.sendMessage(ChatColor.RED + "Vous avez déjà voté >:c");
-				}
-				return true;
-			}
-			else
-			{
-				sender.sendMessage(ChatColor.RED + "Impossible de voter en cours de partie !");
-				return true;
-			}
-		}
+			result = voteMapCommand((Player) sender);
 		else if (lCmd.equals("maintenance"))
 		{
-			if (args.length >= 1)
+			if (args.length > 1)
 			{
-				if (args[0].equals("on") && args.length >= 2)
-				{
-					maintenanceMode = true;
-					maintenanceModeMessage = "";
-					for (int i = 1; i < args.length; i++)
-					{
-						maintenanceModeMessage += args[i] + " ";
-					}
-					getLogger().info("Mode maintenance activé : " + maintenanceModeMessage);
-					return true;
-				}
-				else if (args[0].equals("off"))
-				{
-					maintenanceMode = false;
-					getLogger().info("Mode maintenance désactivé.");
-					return true;
-				}
+				String msg = "";
+			
+				for (int i = 1; i < args.length; i++)
+					msg += args[i] + " ";
+				
+				result = setMaintenanceModeCommand(args[0], msg);
 			}
 		}
-		return false;
+
+		if (result.equals("")) return true;
+		else
+		{
+			sender.sendMessage(ChatColor.DARK_RED + result);
+			return false;
+		}
+	}
+	
+	public String spectateCommand(String player, String mode)
+	{
+		Player p = Bukkit.getPlayer(getUuid(player));
+
+		if (p == null)
+			return "Joueur introuvable";
+		
+		UUID pId = p.getUniqueId();
+		
+		if (mode.equalsIgnoreCase("on"))
+		{
+			if (SGOnline.getSGSpectator(pId) == null)
+			{
+				SGOnline.getSGPlayer(pId).remove();
+				new SGSpectator(p);
+				return "";
+			}
+			else
+				return "Ce joueur est déjà spectateur.";
+		}
+		else if (mode.equalsIgnoreCase("off"))
+		{
+			if (SGOnline.getSGPlayer(pId) == null)
+			{
+				SGOnline.getSGSpectator(pId).remove();
+				new SGPlayer(p);
+				return "";
+			}
+			else
+				return "Ce joueur n'est pas spectateur.";
+		}
+		else
+			return "Syntaxe incorrecte.";
+	}
+
+	public String voteMapCommand(Player voter)
+	{
+		if (getGameStateType() != GameStateType.WAITING)
+			return "Impossible de voter en cours de partie !";
+
+		if (nVotemap.add(voter.getUniqueId()))
+		{
+			Bukkit.broadcastMessage(ChatColor.GREEN + voter.getName() + ChatColor.YELLOW
+					+ " a demandé un changement de map !");
+			Bukkit.broadcastMessage(ChatColor.RED + "(" + nVotemap.size() + "/" + getVotemapsRequired()
+					+ " requis)");
+			return "";
+		}
+		else
+			return "Vous avez déjà voté >:c";
+	}
+	
+	public String forceStartCommand()
+	{
+		if (getGameStateType() != GameStateType.WAITING)
+			return "Partie déjà démarrée !";
+		
+		if (SGOnline.getPlayerCount() < 2)
+			return "Pas assez de joueurs !";
+
+		this.forceStart = true;
+		return "";
+	}
+	
+	public String setMaintenanceModeCommand(String mode, String msg)
+	{
+		if (mode.equals("on"))
+		{
+			maintenanceMode = true;
+			getLogger().info("Mode maintenance activé" + ((msg.equals("")) ? "." : " : " + msg));
+		}
+		else if (mode.equals("off"))
+		{
+			maintenanceMode = false;
+			getLogger().info("Mode maintenance désactivé.");
+		}
+		else 
+			return "Syntaxe incorrecte.";
+		
+		return "";
 	}
 
 	public void onDisable()
@@ -395,7 +395,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 		this.running = false;
 		this.timer = new TimerThread();
-		setGameState(GameStateType.WAITING);
 
 		this.playersRequired = getConfig().getInt("playersRequired");
 		this.waitBeforeStart = getConfig().getInt("waitBeforeStart");
@@ -418,13 +417,15 @@ public final class ScapegoatPlugin extends JavaPlugin
 		this.nameToUuid = new HashMap<String, UUID>();
 
 		this.stuffer = new ItemStuffer();
-
 		
 		this.maxFistWarnings = getConfig().getInt("security.maxFistWarnings");
 
-		this.database = new MySQL(this, getConfig().getString("database.host"), getConfig().getString("database.port"),
-				getConfig().getString("database.database"), getConfig().getString("database.user"), getConfig()
-						.getString("database.password"));
+		this.database = new MySQL(
+				this, getConfig().getString("database.host"),
+				getConfig().getString("database.port"),
+				getConfig().getString("database.database"),
+				getConfig().getString("database.user"),
+				getConfig().getString("database.password"));
 
 		try
 		{
@@ -438,6 +439,8 @@ public final class ScapegoatPlugin extends JavaPlugin
 		{
 			e.printStackTrace();
 		}
+		
+		setGameState(GameStateType.WAITING);
 
 		for (Player p : Bukkit.getOnlinePlayers())
 		{
@@ -445,7 +448,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 			p.setScoreboard(getScoreboard());
 			createSGPlayer(p);
 		}
-
 		start();
 	}
 
@@ -457,11 +459,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 	public void removeVotemap(UUID player)
 	{
 		nVotemap.remove(player);
-	}
-
-	public void setForceStart(boolean forceStart)
-	{
-		this.forceStart = forceStart;
 	}
 
 	public synchronized void setGameState(GameStateType gametype)
@@ -479,6 +476,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 			state = new Running();
 			timer.setSecondsLeft(getTeleporterDelay());
 			break;
+		default:
 		}
 
 		this.state.register();
@@ -500,15 +498,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 			return;
 		
 		running = false;
-		
-		try
-		{
-			timer.wait();
-		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		}
 	}
 
 	public synchronized void timerTick(int secondsLeft)

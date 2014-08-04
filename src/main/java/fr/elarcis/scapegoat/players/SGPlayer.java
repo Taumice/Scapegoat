@@ -80,7 +80,7 @@ public class SGPlayer extends SGOnline
 
 		Location abs = s.getLocation();
 
-		int pitSize = 4;
+		int pitSize = 5;
 		boolean solidFound = false;
 		boolean lavaFound = false;
 
@@ -98,7 +98,7 @@ public class SGPlayer extends SGOnline
 		for (int i = 0; i <= pitSize; i++)
 		{
 			Block b = abs.getWorld().getBlockAt(abs.getBlockX(),
-					abs.getBlockY() - i - 1, abs.getBlockZ());
+					abs.getBlockY() - i, abs.getBlockZ());
 
 			if (b.getType() == Material.STATIONARY_LAVA
 					|| b.getType() == Material.LAVA)
