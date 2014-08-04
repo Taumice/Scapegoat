@@ -18,7 +18,7 @@ commands:
         usage: /votemap
         permission:
     maintenance:
-        description: Mettre le serveur en mode maintenance.
+        description: Définir le mode maintenance.
         usage: /maintenance [[on] [message]|off]
         permission: scapegoat.maintenance
         permission-message: Vous n'avez pas la permission scapegoat.maintenance.
