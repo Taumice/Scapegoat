@@ -17,14 +17,13 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import fr.elarcis.scapegoat.ItemSet;
-import fr.elarcis.scapegoat.ScapegoatPlugin;
 
 public class SGSpectator extends SGOnline
 {
 
-	public SGSpectator(ScapegoatPlugin plugin, OfflinePlayer player)
+	public SGSpectator(OfflinePlayer player)
 	{
-		super(plugin, player);
+		super(player);
 
 		join();
 		SGOnline.sgSpectators.put(id, this);

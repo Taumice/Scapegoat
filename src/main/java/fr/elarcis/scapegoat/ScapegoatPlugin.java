@@ -82,11 +82,11 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 		if (!p.isOp() && SGOnline.getType(p.getUniqueId()) != PlayerType.SPECTATOR)
 		{
-			newPlayer = new SGPlayer(this, p);
+			newPlayer = new SGPlayer(p);
 			newPlayer.welcome();
 		} else if (SGOnline.getType(p.getUniqueId()) != PlayerType.SPECTATOR)
 		{
-			newPlayer = new SGSpectator(this, p);
+			newPlayer = new SGSpectator(p);
 			newPlayer.welcome();
 		} else
 		{
@@ -94,7 +94,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 			((SGSpectator)newPlayer).join();
 		}
 		
-		new GetPlayerStatsAsync(this, newPlayer).runTaskAsynchronously(this);
+		new GetPlayerStatsAsync(newPlayer).runTaskAsynchronously(this);
 	}
 
 	public void endGame(SGPlayer winner)
@@ -139,7 +139,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 				default:
 				}
 				
-				new PlayerKickScheduler(this, p.getUniqueId(), kickMessage)
+				new PlayerKickScheduler(p.getUniqueId(), kickMessage)
 				.runTaskLater(this, 20 * 5);
 			}
 
@@ -259,7 +259,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 						{
 							if (p.isOnline())
 								SGOnline.getSGPlayer(p.getUniqueId()).remove();
-							new SGSpectator(this, p);
+							new SGSpectator(p);
 							return true;
 						} else
 						{
@@ -271,7 +271,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 						{
 							SGOnline.getSGSpectator(p.getUniqueId()).remove();
 							if (p.isOnline())
-								new SGPlayer(this, p.getPlayer());
+								new SGPlayer(p.getPlayer());
 							return true;
 						} else
 						{
@@ -365,7 +365,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 		saveDefaultConfig();
 
 		this.running = false;
-		this.timer = new TimerThread(this);
+		this.timer = new TimerThread();
 
 		this.playersRequired = getConfig().getInt("playersRequired");
 		this.waitBeforeStart = getConfig().getInt("waitBeforeStart");
@@ -438,11 +438,11 @@ public final class ScapegoatPlugin extends JavaPlugin
 		switch (gametype)
 		{
 		case WAITING:
-			state = new Waiting(this);
+			state = new Waiting();
 			timer.setSecondsLeft(waitBeforeStart);
 			break;
 		case RUNNING:
-			state = new Running(this);
+			state = new Running();
 			timer.setSecondsLeft(getTeleporterDelay());
 			break;
 		}

@@ -34,12 +34,8 @@ import fr.elarcis.scapegoat.players.SGSpectator;
 
 public abstract class GameState implements Listener
 {
-	protected ScapegoatPlugin plugin;
-
-	public GameState(ScapegoatPlugin game)
-	{
-		this.plugin = game;
-	}
+	protected static ScapegoatPlugin plugin =
+			ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 
 	public abstract GameStateType getType();
 

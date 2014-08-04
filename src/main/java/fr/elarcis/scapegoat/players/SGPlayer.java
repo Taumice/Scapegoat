@@ -33,9 +33,9 @@ public class SGPlayer extends SGOnline
 	protected int nFistWarning;
 	protected SGPlayer lastFist;
 
-	public SGPlayer(ScapegoatPlugin plugin, Player player)
+	public SGPlayer(Player player)
 	{
-		super(plugin, player);
+		super(player);
 
 		SGOnline.sgPlayers.put(id, this);
 		plugin.getScoreboard().getTeam("Players").addPlayer(player);
@@ -185,7 +185,7 @@ public class SGPlayer extends SGOnline
 			
 			SGOnline.getSGPlayer(killed.getUniqueId()).remove();
 			
-			new PlayerKickScheduler(plugin, killed.getUniqueId(), kickMessage)
+			new PlayerKickScheduler(killed.getUniqueId(), kickMessage)
 			.runTaskLater(plugin, 20 * 5);
 		}
 	}
@@ -213,7 +213,7 @@ public class SGPlayer extends SGOnline
 			plugin.getScoreboard().getTeam("Players")
 					.removePlayer(getPlayer());
 			
-			new SetPlayerStatsAsync(plugin, this).runTaskAsynchronously(plugin);
+			new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
 		}
 	}
 

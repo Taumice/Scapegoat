@@ -28,11 +28,6 @@ public class Waiting extends GameState
 	protected boolean countdown;
 	protected int secondsLeft;
 
-	public Waiting(ScapegoatPlugin plugin)
-	{
-		super(plugin);
-	}
-
 	@Override
 	public GameStateType getType()
 	{

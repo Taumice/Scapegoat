@@ -42,11 +42,6 @@ public class Running extends GameState
 	protected static final String nextTP = "Prochain TP :";
 	protected GameModifier modifier;
 
-	public Running(ScapegoatPlugin plugin)
-	{
-		super(plugin);
-	}
-
 	@Override
 	public GameStateType getType()
 	{

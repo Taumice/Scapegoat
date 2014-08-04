@@ -21,7 +21,8 @@ import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
 
 public abstract class SGOnline {
-	protected static ScapegoatPlugin plugin;
+	protected static ScapegoatPlugin plugin =
+			ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	
 	protected String name;
 	protected UUID id;
@@ -40,7 +41,7 @@ public abstract class SGOnline {
 	protected static Map<UUID, SGPlayer> sgPlayers = new HashMap<UUID, SGPlayer>();
 	protected static Map<UUID, SGSpectator> sgSpectators = new HashMap<UUID, SGSpectator>();
 	
-	public SGOnline(ScapegoatPlugin plugin, OfflinePlayer p) {
+	public SGOnline(OfflinePlayer p) {
 		this.name = p.getName();
 		this.id = p.getUniqueId();
 		this.kills = 0;
@@ -49,7 +50,6 @@ public abstract class SGOnline {
 		this.plays = 0;
 		this.wins = 0;
 		this.hasRecord = false;
-		if(SGOnline.plugin == null) SGOnline.plugin = plugin;
 	}
 	
 	@Override

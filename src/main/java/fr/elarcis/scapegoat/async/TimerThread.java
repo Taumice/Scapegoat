@@ -4,11 +4,11 @@ import fr.elarcis.scapegoat.ScapegoatPlugin;
 
 
 public class TimerThread extends Thread {
-	ScapegoatPlugin plugin;
-	int secondsLeft;
+	protected static ScapegoatPlugin plugin =
+			ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
+	protected int secondsLeft;
 	
-	public TimerThread(ScapegoatPlugin plugin) {
-		this.plugin = plugin;
+	public TimerThread() {
 		this.setName("Scapegoat Timer Thread");
 	}
 
