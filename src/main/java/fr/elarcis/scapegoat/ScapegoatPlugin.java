@@ -347,7 +347,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 		this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
 		this.scoreboard.registerNewTeam("Spectators").setPrefix(ChatColor.GREEN + "");
-		this.scoreboard.registerNewTeam("Players");
+		this.scoreboard.registerNewTeam("Players").setCanSeeFriendlyInvisibles(false);
 		this.scoreboard.registerNewTeam("Scapegoat").setPrefix(SCAPEGOAT_COLOR + "");
 		this.scoreboard.registerNewObjective("panelInfo", "dummy").setDisplaySlot(DisplaySlot.SIDEBAR);
 		this.scoreboard.registerNewObjective("scores", "dummy").setDisplaySlot(DisplaySlot.PLAYER_LIST);
