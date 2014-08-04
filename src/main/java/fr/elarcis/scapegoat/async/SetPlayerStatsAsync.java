@@ -11,8 +11,7 @@ import fr.elarcis.scapegoat.players.SGOnline;
 
 public class SetPlayerStatsAsync extends BukkitRunnable
 {
-	protected static ScapegoatPlugin plugin =
-			ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
+	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	protected SGOnline player;
 	
 	public SetPlayerStatsAsync(SGOnline player)

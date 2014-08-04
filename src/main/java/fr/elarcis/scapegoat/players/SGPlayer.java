@@ -3,10 +3,10 @@ package fr.elarcis.scapegoat.players;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -41,19 +41,16 @@ public class SGPlayer extends SGOnline
 		plugin.getScoreboard().getTeam("Players").addPlayer(player);
 
 		if (plugin.getGameStateType() == GameStateType.RUNNING)
-		{
 			player.kickPlayer("Hélà, on rejoint pas une partie en cours, "
 					+ ChatColor.ITALIC + "gros malin" + ChatColor.RESET + ".");
-		} else
+		else
 		{
 			player.setGameMode(GameMode.SURVIVAL);
+			
 			if (name.equals("Elarcis"))
-			{
 				player.setDisplayName("§6E§rlarcis");
-			} else
-			{
+			else
 				player.setDisplayName(name);
-			}
 
 			this.dead = false;
 			this.nFistWarning = plugin.getMaxFistWarning();
@@ -63,12 +60,88 @@ public class SGPlayer extends SGOnline
 			giveTrophees();
 		}
 
-		// Hide every spectators to every incoming player.
-		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
+		join();
+	}
+
+	public static synchronized void teleport()
+	{
+		Map<UUID, SGPlayer> candidates = new HashMap<UUID, SGPlayer>(sgPlayers);
+		candidates.remove(scapegoat.getId());
+
+		int pIndex = new Random().nextInt(candidates.size());
+		
+		Player t = ((SGPlayer) candidates.values().toArray()[pIndex]).getPlayer();
+		Player s = SGOnline.scapegoat.getPlayer();
+
+		// Basic trap detection System
+		
+		t.setNoDamageTicks(40);
+		s.setNoDamageTicks(40);
+
+		Location abs = s.getLocation();
+
+		int pitSize = 4;
+		boolean solidFound = false;
+		boolean lavaFound = false;
+
+		if (!t.isInsideVehicle())
+			t.teleport(s, TeleportCause.PLUGIN);
+		else
 		{
-			if (e.getValue().isOnline())
-				getPlayer().hidePlayer(e.getValue().getPlayer());
+			Entity v = t.getVehicle();
+			v.eject();
+			v.teleport(s, TeleportCause.PLUGIN);
+			t.teleport(s, TeleportCause.PLUGIN);
+			v.setPassenger(t);
 		}
+
+		for (int i = 0; i <= pitSize; i++)
+		{
+			Block b = abs.getWorld().getBlockAt(abs.getBlockX(),
+					abs.getBlockY() - i - 1, abs.getBlockZ());
+
+			if (b.getType() == Material.STATIONARY_LAVA
+					|| b.getType() == Material.LAVA)
+			{
+				lavaFound = true;
+				break;
+			}
+			
+			Set<Material> nonSolids = new HashSet<Material>();
+			nonSolids.add(Material.SIGN);
+			nonSolids.add(Material.LADDER);
+			nonSolids.add(Material.TORCH);
+			nonSolids.add(Material.WEB);
+			nonSolids.add(Material.REDSTONE_TORCH_OFF);
+			nonSolids.add(Material.REDSTONE_TORCH_ON);
+			nonSolids.add(Material.AIR);
+
+			if (!nonSolids.contains(b.getType()))
+			{
+				solidFound = true;
+				break;
+			}
+		}
+
+		// TODO: BETTER HANDLE THAT TP
+
+		if (lavaFound || !solidFound)
+		{
+			abs.setX(abs.getBlockX() + 0.5);
+			abs.setZ(abs.getBlockZ() + 0.5);
+			s.teleport(abs);
+			s.setSneaking(false);
+		}
+
+		plugin.addTeleport();
+		s.getWorld().strikeLightningEffect(s.getLocation());
+
+		for (Player p : Bukkit.getOnlinePlayers())
+			p.playSound(p.getLocation(), Sound.AMBIENCE_THUNDER, 1, 1);
+
+		Bukkit.broadcastMessage(ScapegoatPlugin.PLAYER_COLOR + t.getName()
+				+ ChatColor.RESET + " a été téléporté auprès du "
+				+ ScapegoatPlugin.SCAPEGOAT_COLOR + "bouc-émissaire !");
 	}
 
 	public void addFistWarning(SGPlayer victim)
@@ -78,15 +151,14 @@ public class SGPlayer extends SGOnline
 			nFistWarning = plugin.getMaxFistWarning();
 			lastFist = victim;
 		}
+		
 		nFistWarning--;
 
 		if (nFistWarning == 0)
 		{
-			getPlayer().kickPlayer(
-					"T'es fier ? Maintenant va apprendre à jouer.");
-			Bukkit.broadcastMessage("On applaudit bien fort "
-					+ ScapegoatPlugin.PLAYER_COLOR + getName()
-					+ ChatColor.RESET + " qui tape sur tout ce qui bouge !");
+			getPlayer().kickPlayer("T'es fier ? Maintenant va apprendre à jouer.");
+			Bukkit.broadcastMessage("On applaudit bien fort " + ScapegoatPlugin.PLAYER_COLOR
+					+ getName() + ChatColor.RESET + " qui tape sur tout ce qui bouge !");
 			remove();
 		}
 	}
@@ -95,23 +167,20 @@ public class SGPlayer extends SGOnline
 	public PlayerType getType()
 	{
 		if (equals(scapegoat))
-		{
 			return PlayerType.SCAPEGOAT;
-		} else
+		else
 			return PlayerType.PLAYER;
 	}
 
 	public void giveJukebox()
 	{
-		if (!hasRecord())
-		{
-			getPlayer().getInventory().addItem(new ItemStack(Material.JUKEBOX));
-			getPlayer()
-					.sendMessage(
-							ChatColor.YELLOW
-									+ "Tiens, un petit cadeau pour lire ton disque, ne le perd pas ! ~Elarcis");
-			hasRecord(true);
-		}
+		if (getHasRecord())
+			return;
+		
+		getPlayer().getInventory().addItem(new ItemStack(Material.JUKEBOX));
+		getPlayer().sendMessage(ChatColor.YELLOW
+				+ "Tiens, un petit cadeau pour lire ton disque, ne le perd pas ! ~Elarcis");
+		setHasRecord(true);
 	}
 
 	public boolean hasWeapon()
@@ -135,9 +204,15 @@ public class SGPlayer extends SGOnline
 				|| material == Material.DIAMOND_AXE;
 	}
 
-	public boolean isDead()
+	public boolean isDead() { return dead; }
+
+	@Override
+	public void join()
 	{
-		return dead;
+		// Hide every spectator to that blessed ignorant.
+		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
+			if (e.getValue().isOnline())
+				getPlayer().hidePlayer(e.getValue().getPlayer());
 	}
 
 	public void kill(EntityDamageEvent cause)
@@ -190,119 +265,32 @@ public class SGPlayer extends SGOnline
 		}
 	}
 
+	@Override
 	public void remove()
 	{
-		if (sgPlayers.remove(id) != null)
-		{
-			if (plugin.getGameStateType() == GameStateType.RUNNING)
-			{
-				if (getPlayerCount() == 1)
-				{
-					plugin.endGame(((SGPlayer) sgPlayers.values().toArray()[0]));
-				} else if (getPlayerCount() > 1)
-				{
-					if (getScapegoat().equals(id) && getPlayerCount() > 1)
-					{
-						switchScapegoat(true);
-					}
-
-					plugin.getGameState().updatePanelTitle();
-				}
-			}
-
-			plugin.getScoreboard().getTeam("Players")
-					.removePlayer(getPlayer());
-			
-			new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
-		}
-	}
-
-	public static synchronized void teleport()
-	{
-		Map<UUID, SGPlayer> candidates = new HashMap<UUID, SGPlayer>(sgPlayers);
-		candidates.remove(scapegoat.getId());
-
-		Player t = ((SGPlayer) candidates.values().toArray()[new Random()
-				.nextInt(candidates.size())]).getPlayer();
-		Player s = SGOnline.scapegoat.getPlayer();
-
-		// Trap detection System
+		super.remove();
 		
-		t.setNoDamageTicks(40);
-		s.setNoDamageTicks(40);
+		if (sgPlayers.remove(id) == null)
+			return;
 
-		Location abs = s.getLocation();
-
-		int pitSize = 4;
-		boolean solidFound = false;
-		boolean lavaFound = false;
-
-		try
+		if (plugin.getGameStateType() == GameStateType.RUNNING)
 		{
-			if (!t.isInsideVehicle())
+			if (getPlayerCount() == 1)
 			{
-				t.teleport(s, TeleportCause.PLUGIN);
-			} else
-			{
-				Entity v = t.getVehicle();
-				v.eject();
-				v.teleport(s, TeleportCause.PLUGIN);
-				t.teleport(s, TeleportCause.PLUGIN);
-				v.setPassenger(t);
+				SGPlayer winner = (SGPlayer) sgPlayers.values().toArray()[0];
+				plugin.endGame(winner);
 			}
-
-			for (int i = 0; i <= pitSize; i++)
+			else if (getPlayerCount() > 1)
 			{
-				Block b = abs.getWorld().getBlockAt(abs.getBlockX(),
-						abs.getBlockY() - i - 1, abs.getBlockZ());
-
-				if (b.getType() == Material.STATIONARY_LAVA
-						|| b.getType() == Material.LAVA)
-				{
-					lavaFound = true;
-					break;
-				}
+				if (getScapegoat().equals(id) && getPlayerCount() > 1)
+					switchScapegoat(true);
 				
-				Set<Material> nonSolids = new HashSet<Material>();
-				nonSolids.add(Material.SIGN);
-				nonSolids.add(Material.LADDER);
-				nonSolids.add(Material.TORCH);
-				nonSolids.add(Material.WEB);
-				nonSolids.add(Material.REDSTONE_TORCH_OFF);
-				nonSolids.add(Material.REDSTONE_TORCH_ON);
-				nonSolids.add(Material.AIR);
-
-				if (!nonSolids.contains(b.getType()))
-				{
-					solidFound = true;
-					break;
-				}
+				plugin.getGameState().updatePanelTitle();
 			}
-
-			// TODO: BETTER HANDLE THAT TP
-
-			if (lavaFound || !solidFound)
-			{
-				abs.setX(abs.getBlockX() + 0.5);
-				abs.setZ(abs.getBlockZ() + 0.5);
-				s.teleport(abs);
-				s.setSneaking(false);
-			}
-
-			plugin.addTeleport();
-			s.getWorld().strikeLightningEffect(s.getLocation());
-
-			for (Player p : Bukkit.getOnlinePlayers())
-			{
-				p.playSound(p.getLocation(), Sound.AMBIENCE_THUNDER, 1, 1);
-			}
-
-			Bukkit.broadcastMessage(ScapegoatPlugin.PLAYER_COLOR + t.getName()
-					+ ChatColor.RESET + " a été téléporté auprès du "
-					+ ScapegoatPlugin.SCAPEGOAT_COLOR + "bouc-émissaire !");
-		} catch (NullPointerException ex)
-		{
-			// logging here
 		}
+
+		plugin.getScoreboard().getTeam("Players").removePlayer(getPlayer());
+		
+		new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
 	}
 }

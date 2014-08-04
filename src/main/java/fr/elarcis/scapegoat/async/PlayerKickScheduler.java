@@ -10,8 +10,7 @@ import fr.elarcis.scapegoat.ScapegoatPlugin;
 
 public class PlayerKickScheduler extends BukkitRunnable
 {
-	protected ScapegoatPlugin plugin =
-			ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
+	protected ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	protected UUID id;
 	protected String kickMessage;
 

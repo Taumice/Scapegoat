@@ -7,12 +7,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -23,7 +23,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Team;
 
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.async.PlayerSpawnScheduler;
@@ -34,12 +34,13 @@ import fr.elarcis.scapegoat.players.SGSpectator;
 
 public abstract class GameState implements Listener
 {
-	protected static ScapegoatPlugin plugin =
-			ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
-
+	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
+	
 	public abstract GameStateType getType();
-
 	public abstract void init();
+	public abstract void rebuildPanel();
+	public abstract void updatePanelTitle();
+	public abstract int timerTick(int secondsLeft);
 
 	@EventHandler
 	public void onAsyncPlayerChatEvent(AsyncPlayerChatEvent e)
@@ -52,15 +53,17 @@ public abstract class GameState implements Listener
 				e.setFormat("§r<§6E§alarcis§r> " + e.getMessage());
 			else
 				e.setFormat("§r<§6E§rlarcis> " + e.getMessage());
-		} else
+		}
+		else
 		{
-			String prefix = p.getScoreboard().getPlayerTeam(p).getPrefix();
+			Team pTeam = p.getScoreboard().getPlayerTeam(p);
+			String prefix = (pTeam != null) ? pTeam.getPrefix() : "";
 			
 			e.setFormat("§r<" + prefix + e.getPlayer().getName() + "§r> " + e.getMessage());
 		}	
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
 	public void onInventoryClick(InventoryClickEvent e)
 	{
 		UUID id = e.getWhoClicked().getUniqueId();
@@ -72,72 +75,76 @@ public abstract class GameState implements Listener
 			if (item == null)
 				return;
 
-			if (e.isRightClick() && item.getType() == Material.SKULL_ITEM)
+			if (item.getType() == Material.SKULL_ITEM && e.isRightClick())
 			{
-				SGOnline.getSGSpectator(id).teleport(
-						((SkullMeta) item.getItemMeta()).getOwner());
+				String target = ((SkullMeta) item.getItemMeta()).getOwner();
+				SGOnline.getSGSpectator(id).teleport(target);
 			}
 		} else
 		{
 			SGPlayer player = SGOnline.getSGPlayer(id);
-			if (player != null
-					&& e.getInventory().getType() == InventoryType.PLAYER
-					&& e.getCursor() != null
-					&& e.getCursor().getType().isRecord())
-			{
+			
+			if (player == null)
+				return;
+			if ((e.getAction() == InventoryAction.PLACE_ALL || e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY)
+					&& e.getCurrentItem().getType().isRecord()
+					&& (e.getSlotType() == SlotType.CONTAINER || e.getSlotType() == SlotType.QUICKBAR))		
 				player.giveJukebox();
-			}
 		}
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e)
 	{
-		UUID player = e.getPlayer().getUniqueId();
+		UUID id = e.getPlayer().getUniqueId();
+		SGSpectator spec = SGOnline.getSGSpectator(id);
+		
+		if (spec == null)
+			return;
 
-		if (SGOnline.getType(player) == PlayerType.SPECTATOR)
+		if (e.getAction() == Action.RIGHT_CLICK_AIR
+				|| e.getAction() == Action.RIGHT_CLICK_BLOCK
+				&& e.getPlayer().getItemInHand() != null)
 		{
-			if (e.getAction() == Action.RIGHT_CLICK_AIR
-					|| e.getAction() == Action.RIGHT_CLICK_BLOCK
-					&& e.getPlayer().getItemInHand() != null)
-			{
-				ItemStack item = e.getPlayer().getItemInHand();
+			ItemStack item = e.getPlayer().getItemInHand();
 
-				if (item.getType() == Material.COMPASS)
-				{
-					SGOnline.getSGSpectator(player).openInventory();
-					e.setCancelled(true);
-				} else if (item.getType() == Material.SKULL_ITEM)
-				{
-					SGOnline.getSGSpectator(player).teleport(
-							((SkullMeta) item.getItemMeta()).getOwner());
-					e.setCancelled(true);
-				}
-			}
-
-			if (!e.getPlayer().isOp() || e.getAction() == Action.PHYSICAL)
+			if (item.getType() == Material.COMPASS)
 			{
+				spec.openInventory();
 				e.setCancelled(true);
 			}
+			else if (item.getType() == Material.SKULL_ITEM)
+			{
+				String target = ((SkullMeta) item.getItemMeta()).getOwner();
+				spec.teleport(target);
+				e.setCancelled(true);
+			}
+		}
+
+		// Cancel every interaction for non-op, but cancel physical triggering (redstone, etc.) for everyone.
+		if (!e.getPlayer().isOp() || e.getAction() == Action.PHYSICAL)
+		{
+			e.setCancelled(true);
 		}
 	}
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e)
 	{
-		plugin.createSGPlayer(e.getPlayer());
-		e.getPlayer().setScoreboard(plugin.getScoreboard());
+		Player p = e.getPlayer();
+		
+		plugin.createSGPlayer(p);
+		p.setScoreboard(plugin.getScoreboard());
 		
 		// If it's a spectator, only show the message to spectators.
-		if (SGOnline.getSGSpectator(e.getPlayer().getUniqueId()) != null)
+		if (SGOnline.getSGSpectator(p.getUniqueId()) != null)
 		{
 			SGOnline.broadcastSpectators(e.getJoinMessage());
+			e.setJoinMessage("");
 		}
-		
-		e.setJoinMessage("");
 	}
 
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler
 	public void onPlayerLogin(PlayerLoginEvent e)
 	{
 		Player p = e.getPlayer();
@@ -146,21 +153,11 @@ public abstract class GameState implements Listener
 		{
 			e.disallow(Result.KICK_OTHER,
 					ChatColor.YELLOW + plugin.getMaintenanceMessage());
-		} else if (SGOnline.getPlayerCount() >= plugin.getMaxPlayers())
+		}
+		else if (SGOnline.getPlayerCount() >= plugin.getMaxPlayers())
 		{
 			e.disallow(Result.KICK_FULL, ChatColor.YELLOW
 					+ "Le serveur est plein !");
-		}
-	}
-
-	@EventHandler
-	public void onPlayerRespawn(PlayerRespawnEvent e)
-	{
-		SGSpectator spec = SGOnline.getSGSpectator(e.getPlayer().getUniqueId());
-
-		if (spec != null)
-		{
-			new PlayerSpawnScheduler(spec.getId()).runTaskLater(plugin, 2);
 		}
 	}
 
@@ -171,44 +168,43 @@ public abstract class GameState implements Listener
 		SGPlayer player = SGOnline.getSGPlayer(id);
 
 		if (player != null)
-		{
 			player.remove();
-
-		} else
+		else
 		{
-			// If the player doesn't exists, he's either dead or spectating.
-			// If it's a spectator, ony show the message to spectators.
-
-			if (SGOnline.getSGSpectator(id) != null)
-			{
-				SGOnline.broadcastSpectators(e.getQuitMessage());
-			}
 			
+			// If it's a spectator, ony show the message to spectators.
+			if (SGOnline.getSGSpectator(id) != null)
+				SGOnline.broadcastSpectators(e.getQuitMessage());
+			
+			// If the player doesn't exists, he's either spectating or dead.
 			e.setQuitMessage("");
 		}
 
 		plugin.removeVotemap(id);
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
+	public void onPlayerRespawn(PlayerRespawnEvent e)
+	{
+		SGSpectator spec = SGOnline.getSGSpectator(e.getPlayer().getUniqueId());
+
+		if (spec != null)
+			new PlayerSpawnScheduler(spec.getId()).runTaskLater(plugin, 2);
+	}
+
+	@EventHandler
 	public void onServerListPing(ServerListPingEvent e)
 	{
 		e.setMaxPlayers(plugin.getMaxPlayers());
 	}
-
-	public final synchronized void register(JavaPlugin plugin)
+	
+	public final synchronized void register()
 	{
 		Bukkit.getPluginManager().registerEvents(this, plugin);
 	}
-
-	public abstract int timerTick(int secondsLeft);
-
+	
 	public final synchronized void unregister()
 	{
 		HandlerList.unregisterAll(this);
 	}
-
-	public abstract void updatePanelTitle();
-
-	public abstract void rebuildPanel();
 }

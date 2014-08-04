@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Scoreboard;
 
+import code.husky.Database;
 import code.husky.mysql.MySQL;
 import fr.elarcis.scapegoat.async.GetPlayerStatsAsync;
 import fr.elarcis.scapegoat.async.PlayerKickScheduler;
@@ -25,10 +26,7 @@ import fr.elarcis.scapegoat.gamestate.GameState;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
 import fr.elarcis.scapegoat.gamestate.Running;
 import fr.elarcis.scapegoat.gamestate.Waiting;
-import fr.elarcis.scapegoat.players.PlayerType;
-import fr.elarcis.scapegoat.players.SGOnline;
-import fr.elarcis.scapegoat.players.SGPlayer;
-import fr.elarcis.scapegoat.players.SGSpectator;
+import fr.elarcis.scapegoat.players.*;
 
 public final class ScapegoatPlugin extends JavaPlugin
 {
@@ -38,6 +36,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 	protected int playersRequired;
 	protected int maxPlayers;
+
 	protected int waitBeforeStart;
 	protected boolean forceStart;
 
@@ -52,7 +51,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 	protected Set<UUID> nVotemap;
 	protected Map<String, UUID> nameToUuid;
-	
+
 	protected int maxFistWarnings;
 
 	protected boolean maintenanceMode;
@@ -61,114 +60,35 @@ public final class ScapegoatPlugin extends JavaPlugin
 	public static final ChatColor PLAYER_COLOR = ChatColor.DARK_RED;
 	public static final ChatColor SCAPEGOAT_COLOR = ChatColor.DARK_PURPLE;
 
-	protected MySQL mySQL;
+	protected Database database;
 	protected Connection dbConnect;
 
-	public void onEnable()
-	{
-		saveDefaultConfig();
-
-		this.running = false;
-		this.timer = new TimerThread();
-
-		this.playersRequired = getConfig().getInt("playersRequired");
-		this.waitBeforeStart = getConfig().getInt("waitBeforeStart");
-		this.maxPlayers = getConfig().getInt("maxPlayers");
-		this.forceStart = false;
-
-		this.teleporterMaximumDelay = getConfig().getInt("teleport.maxDelay");
-		this.teleporterMinimumDelay = getConfig().getInt("teleport.minDelay");
-		this.teleporterDelaySubstraction = getConfig().getInt(
-				"teleport.substract");
-		this.teleporterDelay = this.teleporterMaximumDelay;
-
-		this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-		this.scoreboard.registerNewTeam("Spectators").setPrefix(ChatColor.GREEN + "");
-		this.scoreboard.registerNewTeam("Players");
-		this.scoreboard.registerNewTeam("Scapegoat").setPrefix(SCAPEGOAT_COLOR + "");
-		this.scoreboard.registerNewObjective("panelInfo", "dummy")
-				.setDisplaySlot(DisplaySlot.SIDEBAR);
-		this.scoreboard.registerNewObjective("scores", "dummy").setDisplaySlot(
-				DisplaySlot.PLAYER_LIST);
-
-		this.nVotemap = new HashSet<UUID>();
-		this.nameToUuid = new HashMap<String, UUID>();
-		
-		this.stuffer = new ItemStuffer();
-
-		setGameState(GameStateType.WAITING);
-		this.maxFistWarnings = getConfig().getInt("security.maxFistWarnings");
-
-		this.mySQL = new MySQL(this,
-				getConfig().getString("database.host"),
-				getConfig().getString("database.port"),
-				getConfig().getString("database.database"),
-				getConfig().getString("database.user"),
-				getConfig().getString("database.password"));
-		
-		try
-		{
-			dbConnect = mySQL.openConnection();
-		} catch (ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		} catch (SQLException e)
-		{
-			e.printStackTrace();
-		}
-
-		for (Player p : Bukkit.getOnlinePlayers())
-		{
-			p.getInventory().clear();
-			p.setScoreboard(getScoreboard());
-			createSGPlayer(p);
-		}
-
-		start();
-	}
-	
-	public void onDisable()
-	{
-		try
-		{
-			mySQL.closeConnection();
-		} catch (SQLException e)
-		{
-			e.printStackTrace();
-		}
-		stop();
-	}
-	
 	public void addTeleport() { nTeleport++; }
-	
-	public void putPlayer(Player player)
-	{
-		this.nameToUuid.put(player.getName(), player.getUniqueId());
-	}
-	
-	public UUID getUuid(String player)
-	{
-		return this.nameToUuid.get(player);
-	}
 
 	public void createSGPlayer(Player p)
 	{
 		SGOnline newPlayer = null;
-
-		if (!p.isOp() && SGOnline.getType(p.getUniqueId()) != PlayerType.SPECTATOR)
-		{
-			newPlayer = new SGPlayer(p);
-			newPlayer.welcome();
-		} else if (SGOnline.getType(p.getUniqueId()) != PlayerType.SPECTATOR)
-		{
-			newPlayer = new SGSpectator(p);
-			newPlayer.welcome();
-		} else
-		{
-			newPlayer = SGOnline.getSGSpectator(p.getUniqueId());
-			((SGSpectator)newPlayer).join();
-		}
+		UUID pId = p.getUniqueId();
 		
+		switch(SGOnline.getType(pId))
+		{
+		case SPECTATOR:
+			newPlayer = SGOnline.getSGSpectator(pId);
+			newPlayer.join();
+			break;
+		default:
+			if (p.isOp())
+			{
+				newPlayer = new SGSpectator(p);
+				newPlayer.welcome();
+			}
+			else
+			{
+				newPlayer = new SGPlayer(p);
+				newPlayer.welcome();
+			}
+		}
+
 		new GetPlayerStatsAsync(newPlayer).runTaskAsynchronously(this);
 	}
 
@@ -179,7 +99,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 			String name = winner.getName();
 			winner.setWins(winner.getWins() + 1);
 			winner.setScore(winner.getScore() + 3);
-			
+
 			for (Player p : Bukkit.getOnlinePlayers())
 			{
 				String kickMessage = null;
@@ -187,18 +107,18 @@ public final class ScapegoatPlugin extends JavaPlugin
 				if (winner.equals(p))
 				{
 					kickMessage = ChatColor.GOLD + "GG !";
-				} else
+				}
+				else
 				{
 					ChatColor kColor = ChatColor.DARK_RED;
 					if (winner.getType() == PlayerType.SCAPEGOAT)
 						kColor = ChatColor.DARK_PURPLE;
 
-					kickMessage = kColor + winner.getName()
-							+ ChatColor.RED + " (" + (int)winner.getPlayer().getHealth() + " PV)"
-							+ ChatColor.RESET + " a gagné !";
+					kickMessage = kColor + winner.getName() + ChatColor.RED + " ("
+							+ (int) winner.getPlayer().getHealth() + " PV)" + ChatColor.RESET + " a gagné !";
 				}
-				
-				switch(SGOnline.getType(p.getUniqueId()))
+
+				switch (SGOnline.getType(p.getUniqueId()))
 				{
 				case PLAYER:
 				case SCAPEGOAT:
@@ -213,13 +133,13 @@ public final class ScapegoatPlugin extends JavaPlugin
 					break;
 				default:
 				}
-				
-				new PlayerKickScheduler(p.getUniqueId(), kickMessage)
-				.runTaskLater(this, 20 * 5);
+
+				new PlayerKickScheduler(p.getUniqueId(), kickMessage).runTaskLater(this, 20 * 5);
 			}
 
 			getLogger().info(name + " a gagné !");
-		} else
+		}
+		else
 		{
 			for (Player p : Bukkit.getOnlinePlayers())
 			{
@@ -253,18 +173,50 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return state.getType();
 	}
 
-	public String getMaintenanceMessage() { return maintenanceModeMessage; }
-	
-	public int getMaxFistWarning() { return maxFistWarnings; }
-	
-	public int getMaxPlayers() { return maxPlayers; }
-	public int getPlayersRequired() { return playersRequired; }
-	public Scoreboard getScoreboard(){ return scoreboard; }
+	public String getMaintenanceMessage()
+	{
+		return maintenanceModeMessage;
+	}
 
-	public ItemStuffer getStuffer() { return stuffer; }
+	public int getMaxFistWarning()
+	{
+		return maxFistWarnings;
+	}
 
-	public int getTeleportCount() { return nTeleport; }
-	public int getTeleporterDelay() { return teleporterDelay; }
+	public int getMaxPlayers()
+	{
+		return maxPlayers;
+	}
+
+	public int getPlayersRequired()
+	{
+		return playersRequired;
+	}
+
+	public Scoreboard getScoreboard()
+	{
+		return scoreboard;
+	}
+
+	public ItemStuffer getStuffer()
+	{
+		return stuffer;
+	}
+
+	public int getTeleportCount()
+	{
+		return nTeleport;
+	}
+
+	public int getTeleporterDelay()
+	{
+		return teleporterDelay;
+	}
+
+	public UUID getUuid(String player)
+	{
+		return this.nameToUuid.get(player);
+	}
 
 	public int getVotemaps()
 	{
@@ -276,11 +228,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 		}
 
 		return total;
-	}
-
-	public void removeVotemap(UUID player)
-	{
-		nVotemap.remove(player);
 	}
 
 	public int getVotemapsRequired()
@@ -308,8 +255,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return running;
 	}
 
-	public boolean onCommand(CommandSender sender, Command cmd, String label,
-			String[] args)
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
 	{
 		String lCmd = cmd.getName().toLowerCase();
 
@@ -336,11 +282,13 @@ public final class ScapegoatPlugin extends JavaPlugin
 								SGOnline.getSGPlayer(p.getUniqueId()).remove();
 							new SGSpectator(p);
 							return true;
-						} else
+						}
+						else
 						{
 							sender.sendMessage("Ce joueur est déjà spectateur.");
 						}
-					} else if (args[1].equalsIgnoreCase("off"))
+					}
+					else if (args[1].equalsIgnoreCase("off"))
 					{
 						if (SGOnline.getType(p.getUniqueId()) == PlayerType.SPECTATOR)
 						{
@@ -348,55 +296,61 @@ public final class ScapegoatPlugin extends JavaPlugin
 							if (p.isOnline())
 								new SGPlayer(p.getPlayer());
 							return true;
-						} else
+						}
+						else
 						{
 							sender.sendMessage("Ce joueur n'est pas spectateur.");
 						}
-					} else
+					}
+					else
 					{
 						sender.sendMessage("Commande incorrecte.");
 					}
-				} else
+				}
+				else
 				{
 					sender.sendMessage("Joueur introuvable.");
 				}
-			} else
+			}
+			else
 			{
 				sender.sendMessage("Mauvais nombre d'arguments !");
 			}
-		} else if (lCmd.equals("start"))
+		}
+		else if (lCmd.equals("start"))
 		{
 			if (getGameStateType() == GameStateType.WAITING && SGOnline.getPlayerCount() >= 2)
 			{
 				setForceStart(true);
 				return true;
-			} else
+			}
+			else
 				return false;
-		} else if (lCmd.equals("votemap") && senderId != null)
+		}
+		else if (lCmd.equals("votemap") && senderId != null)
 		{
 			if (getGameStateType() == GameStateType.WAITING)
 			{
 				if (nVotemap.add(senderId))
 				{
-					Bukkit.broadcastMessage(ChatColor.GREEN + sender.getName()
-							+ ChatColor.YELLOW
+					Bukkit.broadcastMessage(ChatColor.GREEN + sender.getName() + ChatColor.YELLOW
 							+ " a demandé un changement de map !");
-					Bukkit.broadcastMessage(ChatColor.RED + "("
-							+ nVotemap.size() + "/" + getVotemapsRequired()
+					Bukkit.broadcastMessage(ChatColor.RED + "(" + nVotemap.size() + "/" + getVotemapsRequired()
 							+ " requis)");
-				} else
+				}
+				else
 				{
-					sender.sendMessage(ChatColor.RED
-							+ "Vous avez déjà voté >:c");
+					sender.sendMessage(ChatColor.RED + "Vous avez déjà voté >:c");
 				}
 				return true;
-			} else
+			}
+			else
 			{
-				sender.sendMessage(ChatColor.RED
-						+ "Impossible de voter en cours de partie !");
+				sender.sendMessage(ChatColor.RED + "Impossible de voter en cours de partie !");
 				return true;
 			}
-		} else if (lCmd.equals("maintenance"))
+		}
+		else if (lCmd.equals("maintenance"))
 		{
 			if (args.length >= 1)
 			{
@@ -408,11 +362,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 					{
 						maintenanceModeMessage += args[i] + " ";
 					}
-					getLogger().info(
-							"Mode maintenance activé : "
-									+ maintenanceModeMessage);
+					getLogger().info("Mode maintenance activé : " + maintenanceModeMessage);
 					return true;
-				} else if (args[0].equals("off"))
+				}
+				else if (args[0].equals("off"))
 				{
 					maintenanceMode = false;
 					getLogger().info("Mode maintenance désactivé.");
@@ -423,6 +376,89 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return false;
 	}
 
+	public void onDisable()
+	{
+		try
+		{
+			database.closeConnection();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		stop();
+	}
+
+	public void onEnable()
+	{
+		saveDefaultConfig();
+
+		this.running = false;
+		this.timer = new TimerThread();
+		setGameState(GameStateType.WAITING);
+
+		this.playersRequired = getConfig().getInt("playersRequired");
+		this.waitBeforeStart = getConfig().getInt("waitBeforeStart");
+		this.maxPlayers = getConfig().getInt("maxPlayers");
+		this.forceStart = false;
+
+		this.teleporterMaximumDelay = getConfig().getInt("teleport.maxDelay");
+		this.teleporterMinimumDelay = getConfig().getInt("teleport.minDelay");
+		this.teleporterDelaySubstraction = getConfig().getInt("teleport.substract");
+		this.teleporterDelay = this.teleporterMaximumDelay;
+
+		this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+		this.scoreboard.registerNewTeam("Spectators").setPrefix(ChatColor.GREEN + "");
+		this.scoreboard.registerNewTeam("Players");
+		this.scoreboard.registerNewTeam("Scapegoat").setPrefix(SCAPEGOAT_COLOR + "");
+		this.scoreboard.registerNewObjective("panelInfo", "dummy").setDisplaySlot(DisplaySlot.SIDEBAR);
+		this.scoreboard.registerNewObjective("scores", "dummy").setDisplaySlot(DisplaySlot.PLAYER_LIST);
+
+		this.nVotemap = new HashSet<UUID>();
+		this.nameToUuid = new HashMap<String, UUID>();
+
+		this.stuffer = new ItemStuffer();
+
+		
+		this.maxFistWarnings = getConfig().getInt("security.maxFistWarnings");
+
+		this.database = new MySQL(this, getConfig().getString("database.host"), getConfig().getString("database.port"),
+				getConfig().getString("database.database"), getConfig().getString("database.user"), getConfig()
+						.getString("database.password"));
+
+		try
+		{
+			dbConnect = database.openConnection();
+		}
+		catch (ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+
+		for (Player p : Bukkit.getOnlinePlayers())
+		{
+			p.getInventory().clear();
+			p.setScoreboard(getScoreboard());
+			createSGPlayer(p);
+		}
+
+		start();
+	}
+
+	public void putPlayer(Player player)
+	{
+		this.nameToUuid.put(player.getName(), player.getUniqueId());
+	}
+
+	public void removeVotemap(UUID player)
+	{
+		nVotemap.remove(player);
+	}
+
 	public void setForceStart(boolean forceStart)
 	{
 		this.forceStart = forceStart;
@@ -431,9 +467,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 	public synchronized void setGameState(GameStateType gametype)
 	{
 		if (this.state != null)
-		{
 			this.state.unregister();
-		}
 
 		switch (gametype)
 		{
@@ -447,24 +481,33 @@ public final class ScapegoatPlugin extends JavaPlugin
 			break;
 		}
 
-		this.state.register(this);
+		this.state.register();
 		this.state.init();
 	}
 
 	public synchronized void start()
 	{
-		if (!running)
-		{
-			running = true;
-			timer.start();
-		}
+		if (running)
+			return;
+		
+		running = true;
+		timer.start();
 	}
 
 	public synchronized void stop()
 	{
-		if (running)
+		if (!running)
+			return;
+		
+		running = false;
+		
+		try
 		{
-			running = false;
+			timer.wait();
+		}
+		catch (InterruptedException e)
+		{
+			e.printStackTrace();
 		}
 	}
 
@@ -481,16 +524,14 @@ public final class ScapegoatPlugin extends JavaPlugin
 				{
 					for (Player p : Bukkit.getOnlinePlayers())
 					{
-						p.kickPlayer(ChatColor.YELLOW
-								+ "Changement de map voté. Veuillez vous reconnecter.");
+						p.kickPlayer(ChatColor.YELLOW + "Changement de map voté. Veuillez vous reconnecter.");
 					}
 					Bukkit.shutdown();
-				} else
+				}
+				else
 				{
 					setGameState(GameStateType.RUNNING);
-					getLogger().info(
-							"Nouveau bouc-émissaire : "
-									+ SGOnline.getScapegoat().getName());
+					getLogger().info("Nouveau bouc-émissaire : " + SGOnline.getScapegoat().getName());
 					timer.setSecondsLeft(updateTeleporterDelay());
 				}
 				break;
@@ -503,9 +544,8 @@ public final class ScapegoatPlugin extends JavaPlugin
 	public int updateTeleporterDelay()
 	{
 		int substract = Math.max(SGOnline.getPlayerCount() - 3, 0);
-		teleporterDelay = Math.min(teleporterMaximumDelay,
-				teleporterMinimumDelay
-						+ (teleporterDelaySubstraction * substract));
+		teleporterDelay = Math.min(teleporterMaximumDelay, teleporterMinimumDelay
+				+ (teleporterDelaySubstraction * substract));
 		return teleporterDelay;
 	}
 }
