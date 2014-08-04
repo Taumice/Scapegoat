@@ -11,17 +11,19 @@ import fr.elarcis.scapegoat.players.SGOnline;
 
 public class SetPlayerStatsAsync extends BukkitRunnable
 {
-	protected static ScapegoatPlugin plugin;
+	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	protected SGOnline player;
 	
-	public SetPlayerStatsAsync(ScapegoatPlugin plugin, SGOnline player)
+	public SetPlayerStatsAsync(SGOnline player)
 	{
 		this.player = player;
-		SetPlayerStatsAsync.plugin = plugin;
 	}
 	
 	public void run()
 	{
+		if (!player.getDataFetched())
+			return;
+		
 		Connection c = plugin.getDbConnection();
 		
 		try

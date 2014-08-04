@@ -5,7 +5,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -28,11 +27,6 @@ public class Waiting extends GameState
 	protected boolean countdown;
 	protected int secondsLeft;
 
-	public Waiting(ScapegoatPlugin plugin)
-	{
-		super(plugin);
-	}
-
 	@Override
 	public GameStateType getType()
 	{
@@ -43,9 +37,7 @@ public class Waiting extends GameState
 	public synchronized void init()
 	{
 		for (Player p : Bukkit.getOnlinePlayers())
-		{
 			p.setFoodLevel(20);
-		}
 
 		Bukkit.getWorlds().get(0).setTime(2000);
 		Bukkit.getWorlds().get(0).setGameRuleValue("doDaylightCycle", "false");
@@ -55,34 +47,32 @@ public class Waiting extends GameState
 	}
 
 	@EventHandler
-	public void onPlayerHunger(FoodLevelChangeEvent e)
-	{
-		e.setCancelled(true);
-	}
-
-	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent e)
 	{
 		e.setCancelled(true);
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
 	public void onPlayerBreakBlock(BlockBreakEvent e)
 	{
 		if (!(e.getPlayer().isOp() && SGOnline.getType(e.getPlayer()
 				.getUniqueId()) == PlayerType.SPECTATOR))
-		{
 			e.setCancelled(true);
-		}
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent e)
 	{
 		e.setCancelled(true);
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
+	public void onPlayerHunger(FoodLevelChangeEvent e)
+	{
+		e.setCancelled(true);
+	}
+
+	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e)
 	{
 		super.onPlayerInteract(e);
@@ -90,20 +80,16 @@ public class Waiting extends GameState
 		if (!(e.getPlayer().isOp()
 				&& SGOnline.getType(e.getPlayer().getUniqueId()) == PlayerType.SPECTATOR && e
 					.getAction() != Action.PHYSICAL))
-		{
 			e.setCancelled(true);
-		}
 	}
-
-	// Anti-action security
-
-	@EventHandler(priority = EventPriority.HIGHEST)
+	
+	@EventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent e)
 	{
 		e.setCancelled(true);
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
 	public void onServerListPing(ServerListPingEvent e)
 	{
 		super.onServerListPing(e);
@@ -121,24 +107,27 @@ public class Waiting extends GameState
 		int seconds = secondsLeft % 60;
 
 		if (countdown)
+			motd += "Début dans " + ChatColor.DARK_RED + minutes + "m" + seconds + ChatColor.RESET + ".";
+		else
 		{
-			motd += "Début dans " + ChatColor.DARK_RED + minutes + "m"
-					+ seconds + ChatColor.RESET + ".";
-		} else
-		{
-			int required = plugin.getPlayersRequired()
-					- SGOnline.getPlayerCount();
+			int required = plugin.getPlayersRequired() - SGOnline.getPlayerCount();
 			motd += "" + ChatColor.DARK_RED + required + ChatColor.RESET
 					+ " joueur" + (required > 1 ? "s" : "") + " requis.";
 		}
+		
 		e.setMotd(motd);
+	}
+
+	public void rebuildPanel()
+	{
+		plugin.getScoreboard().getObjective("panelInfo").unregister();
+		plugin.getScoreboard().registerNewObjective("panelInfo", "dummy").setDisplaySlot(DisplaySlot.SIDEBAR);
 	}
 
 	@Override
 	public int timerTick(int secondsLeft)
 	{
 		int waitBeforeStart = plugin.getWaitBeforeStart();
-
 		int missing = plugin.getPlayersRequired() - SGOnline.getPlayerCount();
 
 		if (missing > 0)
@@ -150,11 +139,10 @@ public class Waiting extends GameState
 			}
 
 			this.secondsLeft = waitBeforeStart;
-
 			updatePanelInfo(missingPlayers, missing);
-		} else
+		}
+		else
 		{
-
 			this.secondsLeft = secondsLeft;
 
 			if (secondsLeft < 3 && secondsLeft >= 0)
@@ -163,22 +151,18 @@ public class Waiting extends GameState
 						+ Integer.toString(secondsLeft + 1) + "...");
 
 				for (Player p : Bukkit.getOnlinePlayers())
-				{
 					p.playSound(p.getLocation(), Sound.CLICK, 1, 1);
-				}
-			} else if (secondsLeft == 3)
-			{
+			}
+			else if (secondsLeft == 3)
 				Bukkit.broadcastMessage(ChatColor.RED
 						+ "Début de la partie imminent !");
-			} else if (!countdown)
+			else if (!countdown)
 			{
 				rebuildPanel();
 				countdown = true;
 
 				for (Player p : Bukkit.getOnlinePlayers())
-				{
 					p.playSound(p.getLocation(), Sound.SUCCESSFUL_HIT, 1, 1);
-				}
 
 				Bukkit.broadcastMessage(ChatColor.RED
 						+ "Début de la partie dans " + (secondsLeft + 1)
@@ -196,33 +180,18 @@ public class Waiting extends GameState
 		Objective mPlayers = plugin.getScoreboard().getObjective("panelInfo");
 
 		if (plugin.getPlayersRequired() <= SGOnline.getPlayerCount())
-		{
 			mPlayers.setDisplayName("" + ChatColor.GREEN + ChatColor.BOLD
 					+ "En attente");
-		} else
-		{
+		else
 			mPlayers.setDisplayName("" + ChatColor.RED + ChatColor.BOLD
 					+ "En attente");
-		}
-	}
-
-	public void rebuildPanel()
-	{
-		plugin.getScoreboard().getObjective("panelInfo").unregister();
-		plugin.getScoreboard().registerNewObjective("panelInfo", "dummy")
-				.setDisplaySlot(DisplaySlot.SIDEBAR);
 	}
 
 	protected void updatePanelInfo(String message, int score)
 	{
-		Objective mPlayers = plugin.getScoreboard().getObjective("panelInfo");
-
-		// for (OfflinePlayer p : board.getPlayers()) {
-		// board.resetScores(p.getName());
-		// }
-
-		mPlayers.getScore(message).setScore(score);
-
 		updatePanelTitle();
+
+		Objective mPlayers = plugin.getScoreboard().getObjective("panelInfo");
+		mPlayers.getScore(message).setScore(score);
 	}
 }

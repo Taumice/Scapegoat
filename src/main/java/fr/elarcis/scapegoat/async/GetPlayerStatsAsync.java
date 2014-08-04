@@ -12,13 +12,12 @@ import fr.elarcis.scapegoat.players.SGOnline;
 
 public class GetPlayerStatsAsync extends BukkitRunnable
 {
-	protected static ScapegoatPlugin plugin;
+	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	protected SGOnline player;
 	
-	public GetPlayerStatsAsync(ScapegoatPlugin plugin, SGOnline player)
+	public GetPlayerStatsAsync(SGOnline player)
 	{
 		this.player = player;
-		GetPlayerStatsAsync.plugin = plugin;
 	}
 	
 	public void run()
@@ -52,6 +51,8 @@ public class GetPlayerStatsAsync extends BukkitRunnable
 				
 				s.executeUpdate("INSERT INTO players (id) VALUES (UNHEX('" + uuid + "'));");
 			}
+			
+			player.setDataFetched(true);
 		} catch (SQLException e)
 		{
 			e.printStackTrace();

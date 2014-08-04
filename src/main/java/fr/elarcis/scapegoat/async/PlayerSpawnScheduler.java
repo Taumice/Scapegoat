@@ -21,9 +21,7 @@ public class PlayerSpawnScheduler extends BukkitRunnable
 		SGSpectator spec = SGOnline.getSGSpectator(id);
 		
 		if (spec != null)
-		{
 			spec.respawn();
-		}
 	}
 
 }

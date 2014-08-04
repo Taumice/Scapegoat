@@ -8,27 +8,26 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.Team;
 
 import fr.elarcis.scapegoat.ItemSet;
-import fr.elarcis.scapegoat.ScapegoatPlugin;
 
 public class SGSpectator extends SGOnline
 {
 
-	public SGSpectator(ScapegoatPlugin plugin, OfflinePlayer player)
+	public SGSpectator(Player player)
 	{
-		super(plugin, player);
+		super(player);
 
-		join();
 		SGOnline.sgSpectators.put(id, this);
 		plugin.getScoreboard().getTeam("Spectators").addPlayer(player);
+		join();
 	}
 
 	public PlayerType getType()
@@ -38,7 +37,6 @@ public class SGSpectator extends SGOnline
 
 	public void join()
 	{
-		welcome();
 		respawn();
 
 		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
@@ -87,13 +85,16 @@ public class SGSpectator extends SGOnline
 				typeLore = "§7Spectateur";
 				break;
 			default:
+				continue;
 			}
 
 			ItemStack head = new ItemStack(Material.SKULL_ITEM, 1, damage);
 
 			SkullMeta hMeta = (SkullMeta) head.getItemMeta();
 			hMeta.setOwner(p.getName());
-			hMeta.setDisplayName(plugin.getScoreboard().getPlayerTeam(p).getSuffix() + p.getName());
+		
+			Team t = plugin.getScoreboard().getPlayerTeam(p);
+			hMeta.setDisplayName(((t != null) ? t.getSuffix() : "") + p.getName());
 
 			List<String> lore = new ArrayList<String>();
 			lore.add(typeLore);
@@ -121,39 +122,36 @@ public class SGSpectator extends SGOnline
 
 	public void remove()
 	{
-		if (sgSpectators.remove(id) != null && isOnline())
-		{
-			plugin.getScoreboard().getTeam("Spectators")
-					.removePlayer(getPlayer());
-			getPlayer().removePotionEffect(PotionEffectType.INVISIBILITY);
+		super.remove();
+		
+		if (sgSpectators.remove(id) == null || !isOnline())
+			return;
+		
+		Player p = getPlayer();
+		
+		plugin.getScoreboard().getTeam("Spectators").removePlayer(p);
+		p.removePotionEffect(PotionEffectType.INVISIBILITY);
 
-			// Le joueur n'est plus spectateur, on le rend donc visible à tout
-			// le monde
-			// tout en lui masquant les spectateurs. Il n'y a pas besoin de la
-			// logique inverse
-			// du côté des joueurs vu que seuls les spectateurs sont invisibles.
-			for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
-			{
-				getPlayer().hidePlayer(e.getValue().getPlayer());
-			}
+		// Player is no longer spectating, so we restore their visibility.
+		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
+			p.hidePlayer(e.getValue().getPlayer());
 
-			for (Entry<UUID, SGPlayer> e : sgPlayers.entrySet())
-			{
-				e.getValue().getPlayer().showPlayer(getPlayer());
-			}
-		}
+		// We also hide spectators to that pesky traitor.
+		for (Entry<UUID, SGPlayer> e : sgPlayers.entrySet())
+			e.getValue().getPlayer().showPlayer(p);
 	}
 
 	public void respawn()
 	{
-		getPlayer().getInventory().clear();
-		plugin.getStuffer().stuff(getPlayer(), ItemSet.MANUAL);
-		plugin.getStuffer().stuff(getPlayer(), ItemSet.SPECTATOR);
+		Player p = getPlayer();
+		
+		p.getInventory().clear();
+		plugin.getStuffer().stuff(p, ItemSet.MANUAL);
+		plugin.getStuffer().stuff(p, ItemSet.SPECTATOR);
 		giveTrophees();
 
-		getPlayer().setGameMode(GameMode.CREATIVE);
-		getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,
-				Integer.MAX_VALUE, 0));
+		p.setGameMode(GameMode.CREATIVE);
+		p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 0));
 	}
 
 	public void teleport(String player)
@@ -161,8 +159,6 @@ public class SGSpectator extends SGOnline
 		Player p = Bukkit.getPlayer(plugin.getUuid(player));
 
 		if (p != null)
-		{
-			getPlayer().teleport((Player) p);
-		}
+			getPlayer().teleport(p);
 	}
 }

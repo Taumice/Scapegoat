@@ -1,6 +1,6 @@
 name: Scapegoat-PvP
 main: fr.elarcis.scapegoat.ScapegoatPlugin
-version: 0.9.0
+version: 1.0.0
 author: Elarcis
 
 commands:
@@ -18,7 +18,7 @@ commands:
         usage: /votemap
         permission:
     maintenance:
-        description: Mettre le serveur en mode maintenance.
+        description: Activer le mode maintenance.
         usage: /maintenance [[on] [message]|off]
         permission: scapegoat.maintenance
         permission-message: Vous n'avez pas la permission scapegoat.maintenance.
