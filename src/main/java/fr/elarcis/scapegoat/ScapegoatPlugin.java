@@ -32,9 +32,9 @@ import fr.elarcis.scapegoat.players.SGSpectator;
 
 public final class ScapegoatPlugin extends JavaPlugin
 {
-	protected GameState state;
 	protected boolean running;
 	protected TimerThread timer;
+	protected GameState state;
 
 	protected int playersRequired;
 	protected int maxPlayers;
@@ -64,10 +64,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 	protected MySQL mySQL;
 	protected Connection dbConnect;
 
-	public void addTeleport()
-	{
-		nTeleport++;
-	}
+	public void addTeleport() { nTeleport++; }
 	
 	public void putPlayer(Player player)
 	{
@@ -181,54 +178,25 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return state.getType();
 	}
 
-	public String getMaintenanceMessage()
-	{
-		return maintenanceModeMessage;
-	}
+	public String getMaintenanceMessage() { return maintenanceModeMessage; }
+	
+	public int getMaxFistWarning() { return maxFistWarnings; }
+	
+	public int getMaxPlayers() { return maxPlayers; }
+	public int getPlayersRequired() { return playersRequired; }
+	public Scoreboard getScoreboard(){ return scoreboard; }
 
-	public int getMaxFistWarning()
-	{
-		return maxFistWarnings;
-	}
+	public ItemStuffer getStuffer() { return stuffer; }
 
-	public int getMaxPlayers()
-	{
-		return maxPlayers;
-	}
-
-	public int getPlayersRequired()
-	{
-		return playersRequired;
-	}
-
-	public Scoreboard getScoreboard()
-	{
-		return scoreboard;
-	}
-
-	public ItemStuffer getStuffer()
-	{
-		if (stuffer == null)
-			stuffer = new ItemStuffer();
-		return stuffer;
-	}
-
-	public int getTeleportCount()
-	{
-		return nTeleport;
-	}
-
-	public int getTeleporterDelay()
-	{
-		return teleporterDelay;
-	}
+	public int getTeleportCount() { return nTeleport; }
+	public int getTeleporterDelay() { return teleporterDelay; }
 
 	public int getVotemaps()
 	{
 		int total = 0;
 		for (UUID p : nVotemap)
 		{
-			if (Bukkit.getOfflinePlayer(p).isOnline())
+			if (Bukkit.getPlayer(p) != null)
 				total++;
 		}
 
@@ -414,7 +382,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 		this.scoreboard.registerNewTeam("Spectators").setPrefix(ChatColor.GREEN + "");
 		this.scoreboard.registerNewTeam("Players");
 		this.scoreboard.registerNewTeam("Scapegoat").setPrefix(SCAPEGOAT_COLOR + "");
-
 		this.scoreboard.registerNewObjective("panelInfo", "dummy")
 				.setDisplaySlot(DisplaySlot.SIDEBAR);
 		this.scoreboard.registerNewObjective("scores", "dummy").setDisplaySlot(
@@ -422,6 +389,8 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 		this.nVotemap = new HashSet<UUID>();
 		this.nameToUuid = new HashMap<String, UUID>();
+		
+		this.stuffer = new ItemStuffer();
 
 		setGameState(GameStateType.WAITING);
 		this.maxFistWarnings = getConfig().getInt("security.maxFistWarnings");

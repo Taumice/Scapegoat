@@ -51,7 +51,7 @@ public class ItemStuffer {
 	}
 	
 	public void stuff(SGOnline player, ItemSet item) {
-		if (player.getOfflinePlayer().isOnline()) {
+		if (player.getPlayer() != null) {
 			stuff(player.getPlayer(), item);
 		}
 	}

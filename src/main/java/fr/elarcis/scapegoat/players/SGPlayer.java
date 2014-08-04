@@ -211,7 +211,7 @@ public class SGPlayer extends SGOnline
 			}
 
 			plugin.getScoreboard().getTeam("Players")
-					.removePlayer(getOfflinePlayer());
+					.removePlayer(getPlayer());
 			
 			new SetPlayerStatsAsync(plugin, this).runTaskAsynchronously(plugin);
 		}
