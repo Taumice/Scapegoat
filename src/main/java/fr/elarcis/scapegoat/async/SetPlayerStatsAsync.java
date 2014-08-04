@@ -22,6 +22,9 @@ public class SetPlayerStatsAsync extends BukkitRunnable
 	
 	public void run()
 	{
+		if (!player.getDataFetched())
+			return;
+		
 		Connection c = plugin.getDbConnection();
 		
 		try

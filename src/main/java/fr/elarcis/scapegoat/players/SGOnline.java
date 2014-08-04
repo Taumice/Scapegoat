@@ -32,6 +32,7 @@ public abstract class SGOnline {
 	protected int score;
 	protected int plays;
 	protected int wins;
+	protected boolean dataFetched;
 	
 	protected boolean hasRecord;
 	
@@ -49,6 +50,7 @@ public abstract class SGOnline {
 		this.score = 0;
 		this.plays = 0;
 		this.wins = 0;
+		this.dataFetched = false;
 		this.hasRecord = false;
 	}
 	
@@ -90,6 +92,16 @@ public abstract class SGOnline {
 		this.wins = wins;
 		if (wins > 0 && plugin.getGameStateType() == GameStateType.WAITING)
 			giveTrophees();
+	}
+	
+	public synchronized void setDataFetched(boolean dataFetched)
+	{
+		this.dataFetched = dataFetched;
+	}
+	
+	public synchronized boolean getDataFetched()
+	{
+		return dataFetched;
 	}
 	
 	public void giveTrophees()

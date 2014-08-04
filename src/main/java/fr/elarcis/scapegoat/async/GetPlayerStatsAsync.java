@@ -52,6 +52,8 @@ public class GetPlayerStatsAsync extends BukkitRunnable
 				
 				s.executeUpdate("INSERT INTO players (id) VALUES (UNHEX('" + uuid + "'));");
 			}
+			
+			player.setDataFetched(true);
 		} catch (SQLException e)
 		{
 			e.printStackTrace();

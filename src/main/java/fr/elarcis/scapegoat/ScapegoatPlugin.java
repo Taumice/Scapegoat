@@ -291,7 +291,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 			}
 		} else if (lCmd.equals("start"))
 		{
-			if (getGameStateType() == GameStateType.WAITING)
+			if (getGameStateType() == GameStateType.WAITING && SGOnline.getPlayerCount() >= 2)
 			{
 				setForceStart(true);
 				return true;
