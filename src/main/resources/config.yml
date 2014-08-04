@@ -3,15 +3,22 @@ waitBeforeStart: 120
 maxPlayers: 64
 
 teleport:
+  # Maximum delay between two teleports.
   maxDelay: 300
+  # Minimum delay between two teleports.
   minDelay: 90
+  # For each player more than the required setting, these seconds will be added to teleport delays.
+  # Every killed player causes the delay to decrease again.
+  # Teleport delays will still be contained between maxDelay and minDelay.
   substract: 30
-  
+
 security:
+  # Number of unarmed punches a player can do to another unarmed player until the attacking player is kicked.
   maxFistWarnings: 4
   
+# Database settings. Set as needed.
 database:
   host: localhost
   port: 3306
   database: database
-  passwod: password
+  password: password
