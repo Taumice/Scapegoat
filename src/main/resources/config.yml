@@ -1,0 +1,17 @@
+playersRequired: 10
+waitBeforeStart: 120
+maxPlayers: 64
+
+teleport:
+  maxDelay: 300
+  minDelay: 90
+  substract: 30
+  
+security:
+  maxFistWarnings: 4
+  
+database:
+  host: localhost
+  port: 3306
+  database: database
+  passwod: password

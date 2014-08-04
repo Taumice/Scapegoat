@@ -1,0 +1,24 @@
+name: Scapegoat-PvP
+main: fr.elarcis.scapegoat.ScapegoatPlugin
+version: 0.9.0
+author: Elarcis
+
+commands:
+    spectate:
+        description: Activer ou enlever le mode spectateur.
+        usage: /spectate [player] [on|off]
+        permission: scapegoat.spectate
+        permission-message: Vous n'avez pas la permission scapegoat.spectate.
+    start:
+        description: Forcer la partie.
+        usage: /start
+        permission: op
+    votemap:
+        description: Voter pour changer de map.
+        usage: /votemap
+        permission:
+    maintenance:
+        description: Mettre le serveur en mode maintenance.
+        usage: /maintenance [[on] [message]|off]
+        permission: scapegoat.maintenance
+        permission-message: Vous n'avez pas la permission scapegoat.maintenance.
