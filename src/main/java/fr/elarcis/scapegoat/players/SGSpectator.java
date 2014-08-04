@@ -85,6 +85,7 @@ public class SGSpectator extends SGOnline
 				typeLore = "§7Spectateur";
 				break;
 			default:
+				continue;
 			}
 
 			ItemStack head = new ItemStack(Material.SKULL_ITEM, 1, damage);
