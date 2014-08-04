@@ -80,7 +80,7 @@ public class SGPlayer extends SGOnline
 
 		Location abs = s.getLocation();
 
-		int pitSize = 5;
+		int pitSize = 4;
 		boolean solidFound = false;
 		boolean lavaFound = false;
 
@@ -270,27 +270,26 @@ public class SGPlayer extends SGOnline
 	{
 		super.remove();
 		
-		if (sgPlayers.remove(id) == null)
-			return;
-
-		if (plugin.getGameStateType() == GameStateType.RUNNING)
+		if (sgPlayers.remove(id) != null)
 		{
-			if (getPlayerCount() == 1)
+			if (plugin.getGameStateType() == GameStateType.RUNNING)
 			{
-				SGPlayer winner = (SGPlayer) sgPlayers.values().toArray()[0];
-				plugin.endGame(winner);
-			}
-			else if (getPlayerCount() > 1)
-			{
-				if (getScapegoat().equals(id) && getPlayerCount() > 1)
-					switchScapegoat(true);
-				
-				plugin.getGameState().updatePanelTitle();
-			}
+				if (getPlayerCount() == 1)
+				{
+					SGPlayer winner = (SGPlayer) sgPlayers.values().toArray()[0];
+					plugin.endGame(winner);
+				}
+				else if (getPlayerCount() > 1)
+				{
+					if (getScapegoat().equals(id) && getPlayerCount() > 1)
+						switchScapegoat(true);
+					
+					plugin.getGameState().updatePanelTitle();
+				}
+			}	
 		}
 
 		plugin.getScoreboard().getTeam("Players").removePlayer(getPlayer());
-		
 		new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
 	}
 }

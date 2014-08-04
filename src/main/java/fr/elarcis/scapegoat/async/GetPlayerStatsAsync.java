@@ -10,11 +10,18 @@ import org.bukkit.scheduler.BukkitRunnable;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.players.SGOnline;
 
+/**
+ * Retrieve player stats from the database, or create a record if none is found.
+ * @author Lars
+ */
 public class GetPlayerStatsAsync extends BukkitRunnable
 {
 	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	protected SGOnline player;
 	
+	/**
+	 * @param player The player for whom to retrieve stats.
+	 */
 	public GetPlayerStatsAsync(SGOnline player)
 	{
 		this.player = player;

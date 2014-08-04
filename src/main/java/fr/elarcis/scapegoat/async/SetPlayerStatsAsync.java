@@ -9,11 +9,18 @@ import org.bukkit.scheduler.BukkitRunnable;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.players.SGOnline;
 
+/**
+ * Save player stats to database.
+ * @author Lars
+ */
 public class SetPlayerStatsAsync extends BukkitRunnable
 {
 	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	protected SGOnline player;
 	
+	/**
+	 * @param player The player for whom to save stats.
+	 */
 	public SetPlayerStatsAsync(SGOnline player)
 	{
 		this.player = player;

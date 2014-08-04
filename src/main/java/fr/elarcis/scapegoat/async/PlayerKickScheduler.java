@@ -8,12 +8,20 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 
+/**
+ * Kick a player from the server with a message.
+ * @author Lars
+ */
 public class PlayerKickScheduler extends BukkitRunnable
 {
 	protected ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	protected UUID id;
 	protected String kickMessage;
 
+	/**
+	 * @param id The player to kick's UUID.
+	 * @param kickMessage The message to show him when kicked.
+	 */
 	public PlayerKickScheduler(UUID id, String kickMessage)
 	{
 		this.id = id;

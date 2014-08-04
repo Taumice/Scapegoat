@@ -2,6 +2,10 @@ package fr.elarcis.scapegoat.async;
 
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 
+/**
+ * Runs every tenth of a second and updates the plugin's timer.
+ * @author Lars
+ */
 public class TimerThread extends Thread
 {
 	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
