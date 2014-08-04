@@ -320,7 +320,7 @@ public class Running extends GameState
 		}
 	}
 
-	// TODO: Gérer quand le joueur prend le disque depuis un coffre.
+	// TODO: Handle when players take discs from chests.
 	@EventHandler
 	public void onInventoryMoveItem(InventoryMoveItemEvent e)
 	{

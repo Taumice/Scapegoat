@@ -128,7 +128,7 @@ public abstract class GameState implements Listener
 		plugin.createSGPlayer(e.getPlayer());
 		e.getPlayer().setScoreboard(plugin.getScoreboard());
 		
-		// Si c'est un spectateur, ne montrer le message qu'aux spectateurs.
+		// If it's a spectator, only show the message to spectators.
 		if (SGOnline.getSGSpectator(e.getPlayer().getUniqueId()) != null)
 		{
 			SGOnline.broadcastSpectators(e.getJoinMessage());
@@ -176,8 +176,8 @@ public abstract class GameState implements Listener
 
 		} else
 		{
-			// Si le joueur n'existe pas, c'est qu'il a été supprimé, à sa mort donc.
-			// Si c'est un spectateur, on ne montre le message qu'aux spectateurs. Na.
+			// If the player doesn't exists, he's either dead or spectating.
+			// If it's a spectator, ony show the message to spectators.
 
 			if (SGOnline.getSGSpectator(id) != null)
 			{

@@ -63,7 +63,7 @@ public class SGPlayer extends SGOnline
 			giveTrophees();
 		}
 
-		// Puisque le joueur se connecte, on lui masque tous les spectateurs.
+		// Hide every spectators to every incoming player.
 		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
 		{
 			if (e.getValue().isOnline())
@@ -174,7 +174,7 @@ public class SGPlayer extends SGOnline
 						+ " PV)" + ChatColor.RESET + ".";
 			} else
 			{
-				// TODO: Afficher un message custom pour chaque cause de mort
+				// TODO: Display custom message for deaths.
 				 kickMessage = "Mort(e) comme une patate : "
 						+ ScapegoatPlugin.PLAYER_COLOR + cause.getCause();
 			}
@@ -227,6 +227,9 @@ public class SGPlayer extends SGOnline
 		Player s = SGOnline.scapegoat.getPlayer();
 
 		// Trap detection System
+		
+		t.setNoDamageTicks(40);
+		s.setNoDamageTicks(40);
 
 		Location abs = s.getLocation();
 
@@ -276,7 +279,7 @@ public class SGPlayer extends SGOnline
 				}
 			}
 
-			// TODO: Mieux gérer ce putain de tp
+			// TODO: BETTER HANDLE THAT TP
 
 			if (lavaFound || !solidFound)
 			{
