@@ -148,75 +148,29 @@ public final class ScapegoatPlugin extends JavaPlugin
 		}
 	}
 
-	public void forceTimer(int secondsLeft)
-	{
-		timer.setSecondsLeft(secondsLeft);
-	}
+	public void forceTimer(int secondsLeft) { timer.setSecondsLeft(secondsLeft); }
 
-	public synchronized Connection getDbConnection()
-	{
-		return dbConnect;
-	}
+	public synchronized Connection getDbConnection() { return dbConnect; }
+	
+	public boolean getForceStart() { return forceStart; }
+	public GameState getGameState() { return state; }
+	public synchronized GameStateType getGameStateType() { return state.getType(); }
+	
+	public String getMaintenanceMessage() { return maintenanceModeMessage; }
+	
+	public int getMaxFistWarning() { return maxFistWarnings; }
+	public int getMaxPlayers() { return maxPlayers; }
+	public int getPlayersRequired() { return playersRequired; }
+	
+	public Scoreboard getScoreboard() { return scoreboard; }
+	
+	public ItemStuffer getStuffer() { return stuffer; }
+	
+	public int getTeleportCount() { return nTeleport; }
+	public int getTeleporterDelay() { return teleporterDelay; }
+	public int getWaitBeforeStart() { return waitBeforeStart; }
 
-	public boolean getForceStart()
-	{
-		return forceStart;
-	}
-
-	public GameState getGameState()
-	{
-		return state;
-	}
-
-	public synchronized GameStateType getGameStateType()
-	{
-		return state.getType();
-	}
-
-	public String getMaintenanceMessage()
-	{
-		return maintenanceModeMessage;
-	}
-
-	public int getMaxFistWarning()
-	{
-		return maxFistWarnings;
-	}
-
-	public int getMaxPlayers()
-	{
-		return maxPlayers;
-	}
-
-	public int getPlayersRequired()
-	{
-		return playersRequired;
-	}
-
-	public Scoreboard getScoreboard()
-	{
-		return scoreboard;
-	}
-
-	public ItemStuffer getStuffer()
-	{
-		return stuffer;
-	}
-
-	public int getTeleportCount()
-	{
-		return nTeleport;
-	}
-
-	public int getTeleporterDelay()
-	{
-		return teleporterDelay;
-	}
-
-	public UUID getUuid(String player)
-	{
-		return this.nameToUuid.get(player);
-	}
+	public UUID getUuid(String player) { return this.nameToUuid.get(player); }
 
 	public int getVotemaps()
 	{
@@ -235,25 +189,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return (Math.max(SGOnline.getPlayerCount(), getPlayersRequired()) / 2) + 1;
 	}
 
-	public int getWaitBeforeStart()
-	{
-		return waitBeforeStart;
-	}
+	public void info(String message) { getLogger().info(message); }
 
-	public void info(String message)
-	{
-		getLogger().info(message);
-	}
-
-	public boolean isInMaintenanceMode()
-	{
-		return maintenanceMode;
-	}
-
-	public synchronized boolean isRunning()
-	{
-		return running;
-	}
+	public boolean isInMaintenanceMode() { return maintenanceMode; }
+	public synchronized boolean isRunning() { return running; }
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
 	{
@@ -363,12 +302,12 @@ public final class ScapegoatPlugin extends JavaPlugin
 		if (mode.equals("on"))
 		{
 			maintenanceMode = true;
-			getLogger().info("Mode maintenance activé" + ((msg.equals("")) ? "." : " : " + msg));
+			info("Mode maintenance activé" + ((msg.equals("")) ? "." : " : " + msg));
 		}
 		else if (mode.equals("off"))
 		{
 			maintenanceMode = false;
-			getLogger().info("Mode maintenance désactivé.");
+			info("Mode maintenance désactivé.");
 		}
 		else 
 			return "Syntaxe incorrecte.";
@@ -456,11 +395,8 @@ public final class ScapegoatPlugin extends JavaPlugin
 		this.nameToUuid.put(player.getName(), player.getUniqueId());
 	}
 
-	public void removeVotemap(UUID player)
-	{
-		nVotemap.remove(player);
-	}
-
+	public void removeVotemap(UUID player) { nVotemap.remove(player); }
+	
 	public synchronized void setGameState(GameStateType gametype)
 	{
 		if (this.state != null)
