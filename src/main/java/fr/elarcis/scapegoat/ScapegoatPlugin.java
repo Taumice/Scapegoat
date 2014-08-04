@@ -64,6 +64,81 @@ public final class ScapegoatPlugin extends JavaPlugin
 	protected MySQL mySQL;
 	protected Connection dbConnect;
 
+	public void onEnable()
+	{
+		saveDefaultConfig();
+
+		this.running = false;
+		this.timer = new TimerThread();
+
+		this.playersRequired = getConfig().getInt("playersRequired");
+		this.waitBeforeStart = getConfig().getInt("waitBeforeStart");
+		this.maxPlayers = getConfig().getInt("maxPlayers");
+		this.forceStart = false;
+
+		this.teleporterMaximumDelay = getConfig().getInt("teleport.maxDelay");
+		this.teleporterMinimumDelay = getConfig().getInt("teleport.minDelay");
+		this.teleporterDelaySubstraction = getConfig().getInt(
+				"teleport.substract");
+		this.teleporterDelay = this.teleporterMaximumDelay;
+
+		this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+		this.scoreboard.registerNewTeam("Spectators").setPrefix(ChatColor.GREEN + "");
+		this.scoreboard.registerNewTeam("Players");
+		this.scoreboard.registerNewTeam("Scapegoat").setPrefix(SCAPEGOAT_COLOR + "");
+		this.scoreboard.registerNewObjective("panelInfo", "dummy")
+				.setDisplaySlot(DisplaySlot.SIDEBAR);
+		this.scoreboard.registerNewObjective("scores", "dummy").setDisplaySlot(
+				DisplaySlot.PLAYER_LIST);
+
+		this.nVotemap = new HashSet<UUID>();
+		this.nameToUuid = new HashMap<String, UUID>();
+		
+		this.stuffer = new ItemStuffer();
+
+		setGameState(GameStateType.WAITING);
+		this.maxFistWarnings = getConfig().getInt("security.maxFistWarnings");
+
+		this.mySQL = new MySQL(this,
+				getConfig().getString("database.host"),
+				getConfig().getString("database.port"),
+				getConfig().getString("database.database"),
+				getConfig().getString("database.user"),
+				getConfig().getString("database.password"));
+		
+		try
+		{
+			dbConnect = mySQL.openConnection();
+		} catch (ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+
+		for (Player p : Bukkit.getOnlinePlayers())
+		{
+			p.getInventory().clear();
+			p.setScoreboard(getScoreboard());
+			createSGPlayer(p);
+		}
+
+		start();
+	}
+	
+	public void onDisable()
+	{
+		try
+		{
+			mySQL.closeConnection();
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		stop();
+	}
+	
 	public void addTeleport() { nTeleport++; }
 	
 	public void putPlayer(Player player)
@@ -346,81 +421,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 			}
 		}
 		return false;
-	}
-
-	public void onDisable()
-	{
-		try
-		{
-			mySQL.closeConnection();
-		} catch (SQLException e)
-		{
-			e.printStackTrace();
-		}
-		stop();
-	}
-
-	public void onEnable()
-	{
-		saveDefaultConfig();
-
-		this.running = false;
-		this.timer = new TimerThread();
-
-		this.playersRequired = getConfig().getInt("playersRequired");
-		this.waitBeforeStart = getConfig().getInt("waitBeforeStart");
-		this.maxPlayers = getConfig().getInt("maxPlayers");
-		this.forceStart = false;
-
-		this.teleporterMaximumDelay = getConfig().getInt("teleport.maxDelay");
-		this.teleporterMinimumDelay = getConfig().getInt("teleport.minDelay");
-		this.teleporterDelaySubstraction = getConfig().getInt(
-				"teleport.substract");
-		this.teleporterDelay = this.teleporterMaximumDelay;
-
-		this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-		this.scoreboard.registerNewTeam("Spectators").setPrefix(ChatColor.GREEN + "");
-		this.scoreboard.registerNewTeam("Players");
-		this.scoreboard.registerNewTeam("Scapegoat").setPrefix(SCAPEGOAT_COLOR + "");
-		this.scoreboard.registerNewObjective("panelInfo", "dummy")
-				.setDisplaySlot(DisplaySlot.SIDEBAR);
-		this.scoreboard.registerNewObjective("scores", "dummy").setDisplaySlot(
-				DisplaySlot.PLAYER_LIST);
-
-		this.nVotemap = new HashSet<UUID>();
-		this.nameToUuid = new HashMap<String, UUID>();
-		
-		this.stuffer = new ItemStuffer();
-
-		setGameState(GameStateType.WAITING);
-		this.maxFistWarnings = getConfig().getInt("security.maxFistWarnings");
-
-		this.mySQL = new MySQL(this,
-				getConfig().getString("database.host"),
-				getConfig().getString("database.port"),
-				getConfig().getString("database.database"),
-				getConfig().getString("database.user"),
-				getConfig().getString("database.password"));
-		
-		try
-		{
-			dbConnect = mySQL.openConnection();
-		} catch (ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		} catch (SQLException e)
-		{
-			e.printStackTrace();
-		}
-
-		for (Player p : Bukkit.getOnlinePlayers())
-		{
-			p.getInventory().clear();
-			p.setScoreboard(getScoreboard());
-			createSGPlayer(p);
-		}
-
-		start();
 	}
 
 	public void setForceStart(boolean forceStart)

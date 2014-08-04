@@ -52,6 +52,8 @@ public abstract class SGOnline {
 		this.wins = 0;
 		this.dataFetched = false;
 		this.hasRecord = false;
+		
+		plugin.putPlayer(getPlayer());
 	}
 	
 	@Override
