@@ -24,7 +24,9 @@ import org.bukkit.inventory.ItemStack;
 import fr.elarcis.scapegoat.ItemSet;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.async.PlayerKickScheduler;
+import fr.elarcis.scapegoat.gamestate.GameModifier;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
+import fr.elarcis.scapegoat.gamestate.Running;
 
 public class SGPlayer extends SGOnline
 {
@@ -74,14 +76,13 @@ public class SGPlayer extends SGOnline
 
 		// Basic trap detection System
 		
-		t.setNoDamageTicks(80);
-		s.setNoDamageTicks(80);
+		int noDamage = plugin.getNoDamageTicks();
+		
+		t.setNoDamageTicks(noDamage);
+		s.setNoDamageTicks(noDamage);
 
 		Location abs = s.getLocation();
 
-		int pitSize = 5;
-		boolean solidFound = false;
-		boolean lavaFound = false;
 
 		if (!t.isInsideVehicle())
 			t.teleport(s, TeleportCause.PLUGIN);
@@ -93,43 +94,51 @@ public class SGPlayer extends SGOnline
 			t.teleport(s, TeleportCause.PLUGIN);
 			v.setPassenger(t);
 		}
-
-		for (int i = 0; i <= pitSize; i++)
+		
+		int pitSize = plugin.getMaxPitSize();
+		
+		if (pitSize > 0)
 		{
-			Block b = abs.getWorld().getBlockAt(abs.getBlockX(),
-					abs.getBlockY() - i, abs.getBlockZ());
-
-			if (b.getType() == Material.STATIONARY_LAVA
-					|| b.getType() == Material.LAVA)
-			{
-				lavaFound = true;
-				break;
-			}
+			boolean solidFound = false;
+			boolean lavaFound = false;
 			
-			Set<Material> nonSolids = new HashSet<Material>();
-			nonSolids.add(Material.SIGN);
-			nonSolids.add(Material.LADDER);
-			nonSolids.add(Material.TORCH);
-			nonSolids.add(Material.WEB);
-			nonSolids.add(Material.REDSTONE_TORCH_OFF);
-			nonSolids.add(Material.REDSTONE_TORCH_ON);
-			nonSolids.add(Material.AIR);
-
-			if (!nonSolids.contains(b.getType()))
+			for (int i = 0; i < pitSize; i++)
 			{
-				solidFound = true;
-				break;
+				Block b = abs.getWorld().getBlockAt(abs.getBlockX(),
+						abs.getBlockY() - i, abs.getBlockZ());
+
+				if (b.getType() == Material.STATIONARY_LAVA
+						|| b.getType() == Material.LAVA)
+				{
+					lavaFound = true;
+					break;
+				}
+				
+				Set<Material> nonSolids = new HashSet<Material>();
+				nonSolids.add(Material.SIGN);
+				nonSolids.add(Material.LADDER);
+				nonSolids.add(Material.TORCH);
+				nonSolids.add(Material.WEB);
+				nonSolids.add(Material.REDSTONE_TORCH_OFF);
+				nonSolids.add(Material.REDSTONE_TORCH_ON);
+				nonSolids.add(Material.AIR);
+
+				if (!nonSolids.contains(b.getType()))
+				{
+					solidFound = true;
+					break;
+				}
 			}
-		}
 
-		// TODO: BETTER HANDLE THAT TP
+			// TODO: BETTER HANDLE THAT TP
 
-		if (lavaFound || !solidFound)
-		{
-			abs.setX(abs.getBlockX() + 0.5);
-			abs.setZ(abs.getBlockZ() + 0.5);
-			s.teleport(abs);
-			s.setSneaking(false);
+			if (lavaFound || !solidFound)
+			{
+				abs.setX(abs.getBlockX() + 0.5);
+				abs.setZ(abs.getBlockZ() + 0.5);
+				s.teleport(abs);
+				s.setSneaking(false);
+			}
 		}
 
 		plugin.addTeleport();
@@ -235,6 +244,11 @@ public class SGPlayer extends SGOnline
 					setScapegoat(getSGPlayer(killer.getUniqueId()), true);
 					plugin.getGameState().rebuildPanel();
 					kColor = ScapegoatPlugin.PLAYER_COLOR;
+					
+					Running state = (Running) plugin.getGameState();
+					
+					if (state.getModifier() == GameModifier.UHC)
+						killer.setHealth(killer.getHealth() + plugin.getHealthRestoreOnUHC());
 				}
 
 				SGPlayer sgkiller = SGOnline.getSGPlayer(killer.getUniqueId());

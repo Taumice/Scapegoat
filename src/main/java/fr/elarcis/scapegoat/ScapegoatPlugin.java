@@ -55,6 +55,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 	protected Map<String, UUID> nameToUuid;
 
 	protected int maxFistWarnings;
+	protected int maxPitSize;
+	protected int noDamageTicks;
+	
+	protected int healthRestoreOnUHC;
 
 	protected boolean maintenanceMode;
 	protected String maintenanceModeMessage;
@@ -141,12 +145,15 @@ public final class ScapegoatPlugin extends JavaPlugin
 	
 	public boolean getForceStart() { return forceStart; }
 	public GameState getGameState() { return state; }
+	public int getHealthRestoreOnUHC() { return healthRestoreOnUHC; }
 	public synchronized GameStateType getGameStateType() { return state.getType(); }
 	
 	public String getMaintenanceMessage() { return maintenanceModeMessage; }
 	
 	public int getMaxFistWarning() { return maxFistWarnings; }
+	public int getMaxPitSize() { return maxPitSize; }
 	public int getMaxPlayers() { return maxPlayers; }
+	public int getNoDamageTicks() { return noDamageTicks; }
 	public int getPlayersRequired() { return playersRequired; }
 	
 	public Scoreboard getScoreboard() { return scoreboard; }
@@ -344,7 +351,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 		this.stuffer = new ItemStuffer();
 		
+		this.healthRestoreOnUHC = getConfig().getInt("gameplay.healthRestoreOnUHC");
 		this.maxFistWarnings = getConfig().getInt("security.maxFistWarnings");
+		this.maxPitSize = getConfig().getInt("security.maxPitSize");
+		this.noDamageTicks = getConfig().getInt("security.noDamageTicks");
 
 		this.database = new MySQL(
 				this, getConfig().getString("database.host"),

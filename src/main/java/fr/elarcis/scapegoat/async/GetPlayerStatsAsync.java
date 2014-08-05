@@ -39,16 +39,15 @@ public class GetPlayerStatsAsync extends BukkitRunnable
 			ResultSet res = s.executeQuery("SELECT kills, deaths, score, plays, wins FROM players "
 					+ "WHERE id=UNHEX('" + uuid + "');");
 			
-			boolean present = res.first();
-			
-			if (present)
+			if (res.first())
 			{
 				player.setKills(res.getInt("kills"));
 				player.setDeaths(res.getInt("deaths"));
 				player.setScore(res.getInt("score"));
 				player.setPlays(res.getInt("plays"));
 				player.setWins(res.getInt("wins"));
-			} else
+			}
+			else
 			{
 				player.setKills(0);
 				player.setDeaths(0);

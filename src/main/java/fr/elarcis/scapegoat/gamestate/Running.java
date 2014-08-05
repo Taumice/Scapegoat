@@ -172,6 +172,8 @@ public class Running extends GameState
 				p.playSound(p.getLocation(), Sound.WITHER_SPAWN, 10, 1);
 		}
 	}
+	
+	public GameModifier getModifier() { return modifier; }
 
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent e)
