@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -232,9 +233,12 @@ public class Running extends GameState
 		}
 
 		for (ItemStack i : drops)
-			if (i.getType().isRecord())
+			if (i.getType() == Material.JUKEBOX)
+			{
 				drops.remove(i);
-
+				break;
+			}
+		
 		SGOnline.getSGPlayer(p.getUniqueId()).kill(p.getLastDamageCause());
 	}
 
