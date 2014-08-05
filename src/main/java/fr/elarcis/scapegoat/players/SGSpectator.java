@@ -37,6 +37,7 @@ public class SGSpectator extends SGOnline
 
 	public void join()
 	{
+		super.join();
 		respawn();
 
 		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
@@ -121,9 +122,7 @@ public class SGSpectator extends SGOnline
 	}
 
 	public void remove()
-	{
-		super.remove();
-		
+	{		
 		if (sgSpectators.remove(id) == null || !isOnline())
 			return;
 		
@@ -139,6 +138,8 @@ public class SGSpectator extends SGOnline
 		// We also hide spectators to that pesky traitor.
 		for (Entry<UUID, SGPlayer> e : sgPlayers.entrySet())
 			e.getValue().getPlayer().showPlayer(p);
+		
+		super.remove();
 	}
 
 	public void respawn()

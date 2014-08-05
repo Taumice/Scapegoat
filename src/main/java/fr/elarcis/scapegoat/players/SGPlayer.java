@@ -24,7 +24,6 @@ import org.bukkit.inventory.ItemStack;
 import fr.elarcis.scapegoat.ItemSet;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.async.PlayerKickScheduler;
-import fr.elarcis.scapegoat.async.SetPlayerStatsAsync;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
 
 public class SGPlayer extends SGOnline
@@ -75,8 +74,8 @@ public class SGPlayer extends SGOnline
 
 		// Basic trap detection System
 		
-		t.setNoDamageTicks(40);
-		s.setNoDamageTicks(40);
+		t.setNoDamageTicks(80);
+		s.setNoDamageTicks(80);
 
 		Location abs = s.getLocation();
 
@@ -209,6 +208,8 @@ public class SGPlayer extends SGOnline
 	@Override
 	public void join()
 	{
+		super.join();
+		
 		// Hide every spectator to that blessed ignorant.
 		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
 			if (e.getValue().isOnline())
@@ -268,11 +269,9 @@ public class SGPlayer extends SGOnline
 	@Override
 	public void remove()
 	{
-		super.remove();
-		
 		if (sgPlayers.remove(id) == null)
 			return;
-
+		
 		if (plugin.getGameStateType() == GameStateType.RUNNING)
 		{
 			if (getPlayerCount() == 1)
@@ -290,7 +289,6 @@ public class SGPlayer extends SGOnline
 		}
 
 		plugin.getScoreboard().getTeam("Players").removePlayer(getPlayer());
-		
-		new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
+		super.remove();
 	}
 }
