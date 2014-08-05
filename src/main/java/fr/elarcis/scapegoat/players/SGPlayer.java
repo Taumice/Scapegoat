@@ -239,24 +239,23 @@ public class SGPlayer extends SGOnline
 			{
 				ChatColor kColor = ScapegoatPlugin.SCAPEGOAT_COLOR;
 
-				if (!scapegoat.equals(killer) && !killer.isDead())
+				if (!killer.isDead())
 				{
-					setScapegoat(getSGPlayer(killer.getUniqueId()), true);
-					plugin.getGameState().rebuildPanel();
-					kColor = ScapegoatPlugin.PLAYER_COLOR;
+					if(!scapegoat.equals(killer))
+					{
+						setScapegoat(getSGPlayer(killer.getUniqueId()), true);
+						plugin.getGameState().rebuildPanel();
+						kColor = ScapegoatPlugin.PLAYER_COLOR;
+					}
 					
 					Running state = (Running) plugin.getGameState();
 					
 					if (state.getModifier() == GameModifier.UHC)
 						killer.setHealth(killer.getHealth() + plugin.getHealthRestoreOnUHC());
-				}
-
-				SGPlayer sgkiller = SGOnline.getSGPlayer(killer.getUniqueId());
-				
-				if (sgkiller != null)
-				{
+					
+					SGPlayer sgkiller = SGOnline.getSGPlayer(killer.getUniqueId());
 					sgkiller.setKills(sgkiller.getKills() + 1);
-					sgkiller.setScore(sgkiller.getScore() + 2);			
+					sgkiller.setScore(sgkiller.getScore() + 2);
 				}
 				
 				kickMessage = "Tué par " + kColor + scapegoat.getName()
