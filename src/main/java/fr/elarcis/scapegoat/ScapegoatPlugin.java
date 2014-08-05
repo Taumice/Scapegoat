@@ -117,10 +117,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 					kickMessage = kColor + winner.getName() + ChatColor.RED + " ("
 							+ (int) winner.getPlayer().getHealth() + " PV)" + ChatColor.RESET + " a gagné !";
 				}
+
+				SGPlayer sgp = SGOnline.getSGPlayer(p.getUniqueId());
 				
-				SGOnline sgo = SGOnline.getSGOnline(p.getUniqueId());
-				
-				if (sgo != null) sgo.remove();
+				if (sgp != null) sgp.remove();
 				new PlayerKickScheduler(p.getUniqueId(), kickMessage).runTaskLater(this, 20 * 5);
 			}
 
