@@ -32,16 +32,41 @@ import fr.elarcis.scapegoat.players.SGOnline;
 import fr.elarcis.scapegoat.players.SGPlayer;
 import fr.elarcis.scapegoat.players.SGSpectator;
 
+/**
+ * Base game state, handles event that could happen anytime from the moment the plugin has been loaded.
+ * @author Lars
+ */
 public abstract class GameState implements Listener
 {
 	protected static ScapegoatPlugin plugin = ScapegoatPlugin.getPlugin(ScapegoatPlugin.class);
 	
+	/**
+	 * @return The main function of the game state (WAITING, RUNNING, etc.).
+	 */
 	public abstract GameStateType getType();
+	/**
+	 * Executed when the game state begins. Prefer that to a constructor.
+	 */
 	public abstract void init();
+	/**
+	 * Reconstruct the whole sidebar scoreboard, since playerList is deprecated.
+	 */
 	public abstract void rebuildPanel();
+	/**
+	 * Only update the sidebar scoreboard's title.
+	 */
 	public abstract void updatePanelTitle();
+	/**
+	 * Executed each second by {@link TimerThread}.
+	 * @param secondsLeft Remaining seconds until the timer is done.
+	 * @return The timer will be reset to that value. For no alteration, return secondsLeft unchanged.
+	 */
 	public abstract int timerTick(int secondsLeft);
 
+	/**
+	 * Triggered when a player send a chat message. Used to color usernames according to teams.
+	 * @param e
+	 */
 	@EventHandler
 	public void onAsyncPlayerChatEvent(AsyncPlayerChatEvent e)
 	{
@@ -63,6 +88,11 @@ public abstract class GameState implements Listener
 		}	
 	}
 
+	/**
+	 * Triggered on any inventory click. Used for the menu spectator,
+	 * and the surprise jukebox when a player gets a disc.
+	 * @param e
+	 */
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent e)
 	{
@@ -80,7 +110,8 @@ public abstract class GameState implements Listener
 				String target = ((SkullMeta) item.getItemMeta()).getOwner();
 				SGOnline.getSGSpectator(id).teleport(target);
 			}
-		} else
+		}
+		else
 		{
 			SGPlayer player = SGOnline.getSGPlayer(id);
 			
@@ -93,6 +124,10 @@ public abstract class GameState implements Listener
 		}
 	}
 
+	/**
+	 * Triggered by any interaction. Used for spectator teleportation and security.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e)
 	{
@@ -102,22 +137,32 @@ public abstract class GameState implements Listener
 		if (spec == null)
 			return;
 
-		if (e.getAction() == Action.RIGHT_CLICK_AIR
-				|| e.getAction() == Action.RIGHT_CLICK_BLOCK
-				&& e.getPlayer().getItemInHand() != null)
+		if (e.getPlayer().getItemInHand() != null)
 		{
 			ItemStack item = e.getPlayer().getItemInHand();
-
-			if (item.getType() == Material.COMPASS)
+			
+			switch (e.getAction())
 			{
-				spec.openInventory();
-				e.setCancelled(true);
-			}
-			else if (item.getType() == Material.SKULL_ITEM)
-			{
-				String target = ((SkullMeta) item.getItemMeta()).getOwner();
-				spec.teleport(target);
-				e.setCancelled(true);
+			case RIGHT_CLICK_AIR:
+			case RIGHT_CLICK_BLOCK:
+				switch (item.getType())
+				{
+				case COMPASS:
+					spec.openInventory();
+					e.setCancelled(true);
+					break;
+				case SKULL_ITEM:
+					String target = ((SkullMeta) item.getItemMeta()).getOwner();
+					spec.teleport(target);
+					e.setCancelled(true);
+					break;
+				default:
+				}
+				break;
+				// TODO: Wait for proper replacement of getLineOfSight().
+			// case LEFT_CLICK_AIR:
+			// case LEFT_CLICK_BLOCK:
+			default:
 			}
 		}
 
@@ -128,6 +173,10 @@ public abstract class GameState implements Listener
 		}
 	}
 
+	/**
+	 * Triggered when a player succeeded at connecting to the server.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e)
 	{
@@ -144,6 +193,10 @@ public abstract class GameState implements Listener
 		}
 	}
 
+	/**
+	 * Triggered when a player tries to join the server.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerLogin(PlayerLoginEvent e)
 	{
@@ -161,6 +214,10 @@ public abstract class GameState implements Listener
 		}
 	}
 
+	/**
+	 * Triggered when a player quits the server (by themselves or kicked/banned)
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent e)
 	{
@@ -171,7 +228,6 @@ public abstract class GameState implements Listener
 			player.remove();
 		else
 		{
-			
 			// If it's a spectator, ony show the message to spectators.
 			if (SGOnline.getSGSpectator(id) != null)
 				SGOnline.broadcastSpectators(e.getQuitMessage());
@@ -183,6 +239,11 @@ public abstract class GameState implements Listener
 		plugin.removeVotemap(id);
 	}
 
+	/**
+	 * Triggered JUST BEFORE the player respawned.
+	 * If you want to give stuff to a player, use {@link #SGOnline.respawn()}.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerRespawn(PlayerRespawnEvent e)
 	{
@@ -191,18 +252,28 @@ public abstract class GameState implements Listener
 		if (spec != null)
 			new PlayerSpawnScheduler(spec.getId()).runTaskLater(plugin, 2);
 	}
-
+	
+	/**
+	 * Triggered when a client retrieves server infos for the server list.
+	 * @param e
+	 */
 	@EventHandler
 	public void onServerListPing(ServerListPingEvent e)
 	{
 		e.setMaxPlayers(plugin.getMaxPlayers());
 	}
 	
+	/**
+	 * Subscribe this game state to bukkit events.
+	 */
 	public final synchronized void register()
 	{
 		Bukkit.getPluginManager().registerEvents(this, plugin);
 	}
 	
+	/**
+	 * Unsubscribe this game state from bukkit events.
+	 */
 	public final synchronized void unregister()
 	{
 		HandlerList.unregisterAll(this);
