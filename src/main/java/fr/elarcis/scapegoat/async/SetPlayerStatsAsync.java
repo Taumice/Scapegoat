@@ -36,7 +36,7 @@ public class SetPlayerStatsAsync extends BukkitRunnable
 		try
 		{
 			String uuid = player.getId().toString().replaceAll("-", "");
-
+			
 			Statement s = c.createStatement();
 			s.executeUpdate("UPDATE players SET "
 					+ "kills=" + player.getKills() + ", "

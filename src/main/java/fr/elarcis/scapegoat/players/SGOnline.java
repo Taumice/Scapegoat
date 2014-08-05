@@ -18,6 +18,8 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import fr.elarcis.scapegoat.ScapegoatPlugin;
+import fr.elarcis.scapegoat.async.GetPlayerStatsAsync;
+import fr.elarcis.scapegoat.async.SetPlayerStatsAsync;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
 
 public abstract class SGOnline
@@ -268,9 +270,16 @@ public abstract class SGOnline
 
 	public boolean isOnline() { return Bukkit.getPlayer(id) != null; }
 
-	public abstract void join();
+	public void join()
+	{
+		new GetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
+	}
 
-	public void remove() { sgOnlines.remove(id); }
+	public void remove()
+	{
+		sgOnlines.remove(id);
+		new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
+	}
 
 	public void sendMessage(String msg)
 	{

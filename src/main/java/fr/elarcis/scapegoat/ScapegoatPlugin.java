@@ -19,14 +19,16 @@ import org.bukkit.scoreboard.Scoreboard;
 
 import code.husky.Database;
 import code.husky.mysql.MySQL;
-import fr.elarcis.scapegoat.async.GetPlayerStatsAsync;
 import fr.elarcis.scapegoat.async.PlayerKickScheduler;
 import fr.elarcis.scapegoat.async.TimerThread;
 import fr.elarcis.scapegoat.gamestate.GameState;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
 import fr.elarcis.scapegoat.gamestate.Running;
 import fr.elarcis.scapegoat.gamestate.Waiting;
-import fr.elarcis.scapegoat.players.*;
+import fr.elarcis.scapegoat.players.PlayerType;
+import fr.elarcis.scapegoat.players.SGOnline;
+import fr.elarcis.scapegoat.players.SGPlayer;
+import fr.elarcis.scapegoat.players.SGSpectator;
 
 public final class ScapegoatPlugin extends JavaPlugin
 {
@@ -88,8 +90,6 @@ public final class ScapegoatPlugin extends JavaPlugin
 				newPlayer.welcome();
 			}
 		}
-
-		new GetPlayerStatsAsync(newPlayer).runTaskAsynchronously(this);
 	}
 
 	public void endGame(SGPlayer winner)

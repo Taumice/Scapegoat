@@ -1,6 +1,6 @@
 name: Scapegoat-PvP
 main: fr.elarcis.scapegoat.ScapegoatPlugin
-version: 1.0.2
+version: 1.0.3
 author: Elarcis
 
 commands:

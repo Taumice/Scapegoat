@@ -24,7 +24,6 @@ import org.bukkit.inventory.ItemStack;
 import fr.elarcis.scapegoat.ItemSet;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.async.PlayerKickScheduler;
-import fr.elarcis.scapegoat.async.SetPlayerStatsAsync;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
 
 public class SGPlayer extends SGOnline
@@ -75,12 +74,12 @@ public class SGPlayer extends SGOnline
 
 		// Basic trap detection System
 		
-		t.setNoDamageTicks(40);
-		s.setNoDamageTicks(40);
+		t.setNoDamageTicks(80);
+		s.setNoDamageTicks(80);
 
 		Location abs = s.getLocation();
 
-		int pitSize = 4;
+		int pitSize = 5;
 		boolean solidFound = false;
 		boolean lavaFound = false;
 
@@ -209,6 +208,8 @@ public class SGPlayer extends SGOnline
 	@Override
 	public void join()
 	{
+		super.join();
+		
 		// Hide every spectator to that blessed ignorant.
 		for (Entry<UUID, SGSpectator> e : sgSpectators.entrySet())
 			if (e.getValue().isOnline())
@@ -268,28 +269,26 @@ public class SGPlayer extends SGOnline
 	@Override
 	public void remove()
 	{
-		super.remove();
+		if (sgPlayers.remove(id) == null)
+			return;
 		
-		if (sgPlayers.remove(id) != null)
+		if (plugin.getGameStateType() == GameStateType.RUNNING)
 		{
-			if (plugin.getGameStateType() == GameStateType.RUNNING)
+			if (getPlayerCount() == 1)
 			{
-				if (getPlayerCount() == 1)
-				{
-					SGPlayer winner = (SGPlayer) sgPlayers.values().toArray()[0];
-					plugin.endGame(winner);
-				}
-				else if (getPlayerCount() > 1)
-				{
-					if (getScapegoat().equals(id) && getPlayerCount() > 1)
-						switchScapegoat(true);
-					
-					plugin.getGameState().updatePanelTitle();
-				}
-			}	
+				SGPlayer winner = (SGPlayer) sgPlayers.values().toArray()[0];
+				plugin.endGame(winner);
+			}
+			else if (getPlayerCount() > 1)
+			{
+				if (getScapegoat().equals(id) && getPlayerCount() > 1)
+					switchScapegoat(true);
+				
+				plugin.getGameState().updatePanelTitle();
+			}
 		}
 
 		plugin.getScoreboard().getTeam("Players").removePlayer(getPlayer());
-		new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
+		super.remove();
 	}
 }
