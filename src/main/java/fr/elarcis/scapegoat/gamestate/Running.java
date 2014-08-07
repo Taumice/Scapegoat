@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package fr.elarcis.scapegoat.gamestate;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -41,12 +42,15 @@ import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
+import fr.elarcis.scapegoat.ItemStuffer;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.players.PlayerType;
 import fr.elarcis.scapegoat.players.SGOnline;
@@ -163,7 +167,7 @@ public class Running extends GameState
 				switch (modifier)
 				{
 				case POTION_SPEED:
-					p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 2, true), true);
+					p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 3, true), true);
 					break;
 				case POTION_FIRE:
 					p.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 1, true),
@@ -199,7 +203,7 @@ public class Running extends GameState
 		{
 			UUID damager = ((Player) e.getDamager()).getUniqueId();
 
-			if (SGOnline.getType(damager) == PlayerType.SPECTATOR)
+			if (SGOnline.getSGSpectator(damager) != null)
 				e.setCancelled(true);
 			else if (e.getEntityType() == EntityType.PLAYER && plugin.getTeleportCount() == 0)
 			{
@@ -233,29 +237,52 @@ public class Running extends GameState
 	}
 
 	@EventHandler
-	public void onPlayerDeath(PlayerDeathEvent e)
+	public synchronized void onPlayerDeath(PlayerDeathEvent e)
 	{
 		List<ItemStack> drops = e.getDrops();
 		Player p = e.getEntity();
 
 		e.setDeathMessage(ChatColor.YELLOW + e.getDeathMessage());
 
-		if (!SGOnline.getScapegoat().equals(p) && drops.size() > 0)
-		{
-			int stacksToRemove = (int) (drops.size() * 0.8f);
-			Random rand = new Random();
-
-			for (int i = 0; i < stacksToRemove; i++)
-				drops.remove(rand.nextInt(drops.size()));
-		}
-
-		for (ItemStack i : drops)
-			if (i.getType() == Material.JUKEBOX)
-			{
-				drops.remove(i);
-				break;
-			}
+		Iterator<ItemStack> it = drops.iterator();
 		
+		ItemStack book = null;
+		boolean addBook = false;
+		boolean scapegoat = SGOnline.getScapegoat().equals(p.getUniqueId());
+		
+		while(it.hasNext())
+		{
+			ItemStack item = it.next();
+			
+			switch (item.getType())
+			{
+			case WRITTEN_BOOK:
+				// When a player drops their book, we give the killer a dull book
+				// with the victim's name. Fun !
+				
+				book = new ItemStack(Material.BOOK);
+				BookMeta bookMeta = (BookMeta) item.getItemMeta();
+				
+				if (bookMeta.getTitle().equals(ItemStuffer.MANUAL_TITLE))
+				{
+					ItemMeta meta = book.getItemMeta();
+					
+					meta.setDisplayName(ChatColor.RED + "Livre de " + p.getName());
+					book.setItemMeta(meta);
+					
+					it.remove();
+					addBook = true;
+				}	
+				break;
+			default:
+				if (!scapegoat && !item.getType().isRecord())
+					it.remove();
+			}
+		}
+		
+		if (addBook)
+			drops.add(book);
+			
 		SGOnline.getSGPlayer(p.getUniqueId()).kill(p.getLastDamageCause());
 	}
 
@@ -288,12 +315,14 @@ public class Running extends GameState
 	@EventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent e)
 	{
-		if (SGOnline.getType(e.getPlayer().getUniqueId()) == PlayerType.SPECTATOR)
+		Player p = e.getPlayer();
+		
+		if (SGOnline.getSGSpectator(p.getUniqueId()) != null)
 			e.setCancelled(true);
 
-		SGPlayer player = SGOnline.getSGPlayer(((Player) e.getPlayer()).getUniqueId());
+		SGPlayer player = SGOnline.getSGPlayer(p.getUniqueId());
 
-		if (e.getItem().getItemStack().getType().isRecord())
+		if (player != null && e.getItem().getItemStack().getType().isRecord())
 			player.giveJukebox();
 	}
 

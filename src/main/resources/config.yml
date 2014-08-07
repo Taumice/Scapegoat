@@ -34,20 +34,17 @@ gameplay:
   # The value is specified in half-hearts. A value of 5 will only give 2.5 hearts.
   healthRestoreOnUHC: 0
   
-# Database settings. Uncomment the case you want to use and edit settings as needed.
-# ONLY ONE DATABASE SETTINGS POSSIBLE
-
-database:
-  engine: none
+# Database settings.
+# Some features REQUIRE a database to work properly. If you don't use one, they just won't
+# show up.
 
 #database:
-#  engine: mysql
+#  # Possible values are : none, mysql, sqlite.
+#  engine: none
+#
+#  # The following settings are only used for mysql databases. Don't bother to change them if you don't use one.
 #  host: localhost
 #  port: 3306
 #  database: database
 #  user: user
 #  password: password
-
-#database:
-#  engine: sqlite
-#  file: database

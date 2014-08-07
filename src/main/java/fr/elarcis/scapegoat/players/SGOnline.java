@@ -289,13 +289,15 @@ public abstract class SGOnline
 
 	public void join()
 	{
-		new GetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
+		if (plugin.getDb() != null)
+			new GetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
 	}
 
 	public void remove()
 	{
 		sgOnlines.remove(id);
-		new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
+		if (plugin.getDb() != null)
+			new SetPlayerStatsAsync(this).runTaskAsynchronously(plugin);
 	}
 
 	public void sendMessage(String msg)

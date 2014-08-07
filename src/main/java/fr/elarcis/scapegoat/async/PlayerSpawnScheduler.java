@@ -26,7 +26,7 @@ import fr.elarcis.scapegoat.players.SGSpectator;
 
 /**
  * Execute custom operations to apply to a player after he's respawned.
- * @author Lars
+ * @author Elarcis
  */
 public class PlayerSpawnScheduler extends BukkitRunnable
 {

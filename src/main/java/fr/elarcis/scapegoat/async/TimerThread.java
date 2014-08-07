@@ -21,7 +21,7 @@ import fr.elarcis.scapegoat.ScapegoatPlugin;
 
 /**
  * Runs every tenth of a second and updates the plugin's timer.
- * @author Lars
+ * @author Elarcis
  */
 public class TimerThread extends Thread
 {

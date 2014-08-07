@@ -19,6 +19,7 @@ package fr.elarcis.scapegoat;
 
 import java.util.Random;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -30,6 +31,8 @@ import fr.elarcis.scapegoat.players.SGOnline;
 
 public class ItemStuffer
 {
+	public static final String MANUAL_TITLE = ChatColor.GREEN + "Règles du jeu";
+	
 	protected ItemStack manual;
 	protected ItemStack manual_bonus;
 	protected ItemStack spectating_compass;
@@ -56,7 +59,7 @@ public class ItemStuffer
 		
 		BookMeta bmeta = (BookMeta) manual.getItemMeta();
 		bmeta.setAuthor("§6E§flarcis");
-		bmeta.setTitle("§aRègles du jeu");
+		bmeta.setTitle(MANUAL_TITLE);
 		bmeta.addPage(mpages);
 		
 		manual.setItemMeta(bmeta);
@@ -69,7 +72,7 @@ public class ItemStuffer
 		spectating_compass = new ItemStack(Material.COMPASS);
 		
 		ItemMeta cMeta = spectating_compass.getItemMeta();
-		cMeta.setDisplayName("§9Menu spectateur");
+		cMeta.setDisplayName(ChatColor.BLUE + "Menu spectateur");
 		
 		spectating_compass.setItemMeta(cMeta);
 	}

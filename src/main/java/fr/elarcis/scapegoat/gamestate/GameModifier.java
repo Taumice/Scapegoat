@@ -19,7 +19,7 @@ package fr.elarcis.scapegoat.gamestate;
 
 /**
  * Describes special games that can be set at the beginning.
- * @author Lars
+ * @author Elarcis
  *
  */
 public enum GameModifier

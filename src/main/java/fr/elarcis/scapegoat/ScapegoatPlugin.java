@@ -36,6 +36,7 @@ import org.bukkit.scoreboard.Scoreboard;
 
 import code.husky.Database;
 import code.husky.mysql.MySQL;
+import code.husky.sqlite.SQLite;
 import fr.elarcis.scapegoat.async.PlayerKickScheduler;
 import fr.elarcis.scapegoat.async.TimerThread;
 import fr.elarcis.scapegoat.gamestate.GameState;
@@ -136,7 +137,8 @@ public final class ScapegoatPlugin extends JavaPlugin
 						kColor = ChatColor.DARK_PURPLE;
 
 					kickMessage = kColor + winner.getName() + ChatColor.RED + " ("
-							+ (int) winner.getPlayer().getHealth() + " PV)" + ChatColor.RESET + " a gagné !";
+							+ (int) winner.getPlayer().getHealth() + " PV)"
+							+ ChatColor.RESET + " a gagné !";
 				}
 
 				SGPlayer sgp = SGOnline.getSGPlayer(p.getUniqueId());
@@ -158,7 +160,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 
 	public void forceTimer(int secondsLeft) { timer.setSecondsLeft(secondsLeft); }
 
-	public synchronized Connection getDbConnection() { return dbConnect; }
+	public synchronized Database getDb() { return database; }
 	
 	public boolean getForceStart() { return forceStart; }
 	public GameState getGameState() { return state; }
@@ -201,6 +203,24 @@ public final class ScapegoatPlugin extends JavaPlugin
 	}
 
 	public void info(String message) { getLogger().info(message); }
+	
+	protected void initDatabase()
+	{
+		String engine = getConfig().getString("database.engine");
+		
+		if (engine.equals("none"))
+			database = null;
+		else if (engine.equals("mysql"))
+			database = new MySQL(this,
+					getConfig().getString("database.host"),
+					getConfig().getString("database.port"),
+					getConfig().getString("database.database"),
+					getConfig().getString("database.user"),
+					getConfig().getString("database.password")
+					);
+		else if (engine.equals("sqlite"))
+			database = new SQLite(this, "data.db");
+	}
 
 	public boolean isInMaintenanceMode() { return maintenanceMode; }
 	public synchronized boolean isRunning() { return running; }
@@ -237,7 +257,8 @@ public final class ScapegoatPlugin extends JavaPlugin
 			}
 		}
 
-		if (result.equals("")) return true;
+		if (result.equals(""))
+			return true;
 		else
 		{
 			sender.sendMessage(ChatColor.DARK_RED + result);
@@ -374,25 +395,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 		this.maxPitSize = getConfig().getInt("security.maxPitSize");
 		this.noDamageTicks = getConfig().getInt("security.noDamageTicks");
 
-		this.database = new MySQL(
-				this, getConfig().getString("database.host"),
-				getConfig().getString("database.port"),
-				getConfig().getString("database.database"),
-				getConfig().getString("database.user"),
-				getConfig().getString("database.password"));
-
-		try
-		{
-			dbConnect = database.openConnection();
-		}
-		catch (ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-		catch (SQLException e)
-		{
-			e.printStackTrace();
-		}
+		initDatabase();
 		
 		setGameState(GameStateType.WAITING);
 

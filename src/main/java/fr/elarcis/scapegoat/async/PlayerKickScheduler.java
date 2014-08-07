@@ -27,7 +27,7 @@ import fr.elarcis.scapegoat.ScapegoatPlugin;
 
 /**
  * Kick a player from the server with a message.
- * @author Lars
+ * @author Elarcis
  */
 public class PlayerKickScheduler extends BukkitRunnable
 {

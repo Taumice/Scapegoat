@@ -22,8 +22,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Chest;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -54,7 +53,7 @@ import fr.elarcis.scapegoat.players.SGSpectator;
 
 /**
  * Base game state, handles event that could happen anytime from the moment the plugin has been loaded.
- * @author Lars
+ * @author Elarcis
  */
 public abstract class GameState implements Listener
 {
@@ -77,7 +76,7 @@ public abstract class GameState implements Listener
 	 */
 	public abstract void updatePanelTitle();
 	/**
-	 * Executed each second by {@link TimerThread}.
+	 * Executed each second by {@link fr.elarcis.scapegoat.async.TimerThread TimerThread}.
 	 * @param secondsLeft Remaining seconds until the timer is done.
 	 * @return The timer will be reset to that value. For no alteration, return secondsLeft unchanged.
 	 */
@@ -148,14 +147,14 @@ public abstract class GameState implements Listener
 	@EventHandler
 	public void onChunkPopulate(ChunkPopulateEvent e)
 	{
-		BlockState[] tileEnts = e.getChunk().getTileEntities();
-        for (BlockState state : tileEnts)
-        {
-            if (state.getType() != Material.CHEST)
-                continue;
-            	Chest c = (Chest) state.getBlock();
-            	c.getBlockInventory();
-        }
+//		BlockState[] tileEnts = e.getChunk().getTileEntities();
+//        for (BlockState state : tileEnts)
+//        {
+//            if (state.getType() != Material.CHEST)
+//                continue;
+//            	Chest c = (Chest) state.getBlock();
+//            	c.getBlockInventory();
+//        }
 	}
 
 	/**
@@ -214,16 +213,24 @@ public abstract class GameState implements Listener
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e)
 	{
-		Player p = e.getPlayer();
+		Player sgp = e.getPlayer();
 		
-		plugin.createSGPlayer(p);
-		p.setScoreboard(plugin.getScoreboard());
+		plugin.createSGPlayer(sgp);
+		sgp.setScoreboard(plugin.getScoreboard());
+		
+		boolean isSpec = SGOnline.getSGSpectator(sgp.getUniqueId()) != null;
 		
 		// If it's a spectator, only show the message to spectators.
-		if (SGOnline.getSGSpectator(p.getUniqueId()) != null)
+		if (isSpec)
 		{
 			SGOnline.broadcastSpectators(e.getJoinMessage());
 			e.setJoinMessage("");
+		}
+		
+		for (Player p : Bukkit.getOnlinePlayers())
+		{
+			if (!isSpec || SGOnline.getSGSpectator(p.getUniqueId()) != null)
+				p.playSound(e.getPlayer().getLocation(), Sound.CHICKEN_EGG_POP, 1, 1);
 		}
 	}
 
@@ -275,7 +282,7 @@ public abstract class GameState implements Listener
 
 	/**
 	 * Triggered JUST BEFORE the player respawned.
-	 * If you want to give stuff to a player, use {@link #SGOnline.respawn()}.
+	 * If you want to give stuff to a player, use {@link SGOnline#respawn()}.
 	 * @param e
 	 */
 	@EventHandler

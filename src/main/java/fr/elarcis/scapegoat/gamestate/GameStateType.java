@@ -19,7 +19,7 @@ package fr.elarcis.scapegoat.gamestate;
 
 /**
  * Describes the function of a game state. Used for general gameplay segmentation.
- * @author Lars
+ * @author Elarcis
  */
 public enum GameStateType {
 	/**

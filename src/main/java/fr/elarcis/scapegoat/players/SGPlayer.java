@@ -100,7 +100,6 @@ public class SGPlayer extends SGOnline
 
 		Location abs = s.getLocation();
 
-
 		if (!t.isInsideVehicle())
 			t.teleport(s, TeleportCause.PLUGIN);
 		else
@@ -268,7 +267,7 @@ public class SGPlayer extends SGOnline
 					Running state = (Running) plugin.getGameState();
 					
 					if (state.getModifier() == GameModifier.UHC)
-						killer.setHealth(killer.getHealth() + plugin.getHealthRestoreOnUHC());
+						killer.setHealth(Math.min(20, killer.getHealth() + plugin.getHealthRestoreOnUHC()));
 					
 					SGPlayer sgkiller = SGOnline.getSGPlayer(killer.getUniqueId());
 					sgkiller.setKills(sgkiller.getKills() + 1);

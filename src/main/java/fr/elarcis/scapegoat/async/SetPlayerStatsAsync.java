@@ -17,18 +17,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package fr.elarcis.scapegoat.async;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 import org.bukkit.scheduler.BukkitRunnable;
 
+import code.husky.Database;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.players.SGOnline;
 
 /**
  * Save player stats to database.
- * @author Lars
+ * @author Elarcis
  */
 public class SetPlayerStatsAsync extends BukkitRunnable
 {
@@ -48,14 +47,13 @@ public class SetPlayerStatsAsync extends BukkitRunnable
 		if (!player.getDataFetched())
 			return;
 		
-		Connection c = plugin.getDbConnection();
+		Database db = plugin.getDb();
 		
 		try
 		{
 			String uuid = player.getId().toString().replaceAll("-", "");
-			
-			Statement s = c.createStatement();
-			s.executeUpdate("UPDATE players SET "
+
+			db.updateSQL("UPDATE players SET "
 					+ "kills=" + player.getKills() + ", "
 					+ "deaths=" + player.getDeaths() + ", "
 					+ "score=" + player.getScore() + ", "
@@ -63,9 +61,14 @@ public class SetPlayerStatsAsync extends BukkitRunnable
 					+ "wins=" + player.getWins() + " "
 					+ "WHERE id=UNHEX('" + uuid + "');"
 					);
-			
-		} catch (SQLException e)
+		}
+		catch (SQLException e)
 		{
+			e.printStackTrace();
+		}
+		catch (ClassNotFoundException e)
+		{
+			plugin.getLogger().warning("Attempting to save data without any database configured.");
 			e.printStackTrace();
 		}
 	}
