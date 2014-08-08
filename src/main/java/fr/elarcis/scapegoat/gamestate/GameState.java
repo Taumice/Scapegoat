@@ -28,9 +28,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -117,7 +115,7 @@ public abstract class GameState implements Listener
 	{
 		UUID id = e.getWhoClicked().getUniqueId();
 
-		if (SGOnline.getType(id) == PlayerType.SPECTATOR)
+		if (SGOnline.getSGSpectator(id) != null)
 		{
 			ItemStack item = e.getCurrentItem();
 
@@ -136,9 +134,8 @@ public abstract class GameState implements Listener
 			
 			if (player == null)
 				return;
-			if ((e.getAction() == InventoryAction.PLACE_ALL || e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY)
-					&& e.getCurrentItem().getType().isRecord()
-					&& (e.getSlotType() == SlotType.CONTAINER || e.getSlotType() == SlotType.QUICKBAR))		
+
+			if (e.getCurrentItem() != null && e.getCurrentItem().getType().isRecord())
 				player.giveJukebox();
 		}
 	}

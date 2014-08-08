@@ -275,7 +275,7 @@ public class SGPlayer extends SGOnline
 				}
 				
 				kickMessage = "Tué par " + kColor + scapegoat.getName()
-						+ ChatColor.RED + " (" + (int) killer.getHealth()
+						+ ChatColor.RED + " (" + Math.ceil(killer.getHealth())
 						+ " PV)" + ChatColor.RESET + ".";
 			} else
 			{
