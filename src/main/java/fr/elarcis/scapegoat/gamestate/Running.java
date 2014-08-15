@@ -192,6 +192,8 @@ public class Running extends GameState
 			else
 				p.playSound(p.getLocation(), Sound.WITHER_SPAWN, 10, 1);
 		}
+		
+		SGOnline.computeMediumScore();
 	}
 	
 	public GameModifier getModifier() { return modifier; }
@@ -205,19 +207,32 @@ public class Running extends GameState
 
 			if (SGOnline.getSGSpectator(damager) != null)
 				e.setCancelled(true);
-			else if (e.getEntityType() == EntityType.PLAYER && plugin.getTeleportCount() == 0)
+			else if (e.getEntityType() == EntityType.PLAYER)
 			{
 				SGPlayer sgAttacked = SGOnline.getSGPlayer(((Player) e.getEntity()).getUniqueId());
 				SGPlayer sgDamager = SGOnline.getSGPlayer(damager);
-
-				if (sgDamager != null && !sgDamager.hasWeapon() && !sgAttacked.hasWeapon())
+				
+				if (sgAttacked == null || sgDamager == null)
+					return;
+				
+				if(plugin.getTeleportCount() == 0)
 				{
-					sgDamager.addFistWarning(sgAttacked);
-					Player p = Bukkit.getPlayer(damager);
+					if (sgDamager != null && !sgDamager.hasWeapon() && !sgAttacked.hasWeapon())
+					{
+						sgDamager.addFistWarning(sgAttacked);
+						Player p = Bukkit.getPlayer(damager);
 
-					if (p != null)
-						p.sendMessage(ChatColor.DARK_RED + "NE FONCE PAS SUR LES AUTRES JOUEURS SANS ARME !");
+						if (p != null) {
+							p.sendMessage(ChatColor.DARK_RED + "NE FONCE PAS SUR LES AUTRES JOUEURS SANS ARME !");
+							e.setCancelled(true);
+						}
+					}
 				}
+
+				int scoreDiff = Math.max(0, sgAttacked.getScore() - SGOnline.getMediumScore());
+				double handicap = 1. + (scoreDiff / 100.);
+				
+				e.setDamage(e.getDamage() * handicap);
 			}
 		}
 	}
@@ -243,14 +258,29 @@ public class Running extends GameState
 		Player p = e.getEntity();
 
 		e.setDeathMessage(ChatColor.YELLOW + e.getDeathMessage());
-
-		Iterator<ItemStack> it = drops.iterator();
 		
 		ItemStack book = null;
 		boolean addBook = false;
-		boolean scapegoat = SGOnline.getScapegoat().equals(p.getUniqueId());
+		boolean scapegoat = SGOnline.getScapegoat().equals(p);
 		
-		while(it.hasNext())
+		if (!scapegoat && drops.size() > 0)
+		{
+			int stacksToRemove = (int) (drops.size() * 0.8f);
+			Random rand = new Random();
+
+			for (int i = 0; i < stacksToRemove; i++)
+			{
+				int r = rand.nextInt(drops.size());
+				Material m = drops.get(r).getType();
+				
+				if (m != Material.WRITTEN_BOOK && !m.isRecord())
+					drops.remove(r);
+			}
+		}
+		
+		Iterator<ItemStack> it = drops.iterator();
+
+		while (it.hasNext())
 		{
 			ItemStack item = it.next();
 			
@@ -274,9 +304,9 @@ public class Running extends GameState
 					addBook = true;
 				}	
 				break;
+			case JUKEBOX:
+				it.remove();
 			default:
-				if (!scapegoat && !item.getType().isRecord())
-					it.remove();
 			}
 		}
 		

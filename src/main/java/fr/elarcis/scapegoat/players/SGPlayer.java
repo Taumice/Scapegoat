@@ -79,6 +79,7 @@ public class SGPlayer extends SGOnline
 		}
 
 		join();
+		computeMediumScore();
 	}
 
 	public static synchronized void teleport()
@@ -275,7 +276,7 @@ public class SGPlayer extends SGOnline
 				}
 				
 				kickMessage = "Tué par " + kColor + scapegoat.getName()
-						+ ChatColor.RED + " (" + Math.ceil(killer.getHealth())
+						+ ChatColor.RED + " (" + (int)Math.ceil(killer.getHealth())
 						+ " PV)" + ChatColor.RESET + ".";
 			} else
 			{

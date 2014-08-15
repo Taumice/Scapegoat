@@ -55,6 +55,8 @@ public abstract class SGOnline
 
 	protected boolean hasRecord;
 
+	protected static int mediumScore = 0;
+	
 	protected static SGPlayer scapegoat;
 	protected static boolean showScapegoat;
 
@@ -205,6 +207,21 @@ public abstract class SGOnline
 			return false;
 	}
 	
+	public static void computeMediumScore()
+	{
+		double medium = 0.0;
+		
+		for (Entry<UUID, SGPlayer> p : sgPlayers.entrySet())
+		{
+			medium += p.getValue().getScore();
+		}
+		
+		medium /= sgPlayers.size();
+		mediumScore = (int) medium;
+		
+		plugin.info("Medium Score updated : " + mediumScore);
+	}
+	
 	public UUID getId() { return id; }
 	public String getName() { return name; }
 	public Player getPlayer() { return Bukkit.getPlayer(id); }
@@ -215,6 +232,7 @@ public abstract class SGOnline
 
 	public synchronized int getKills() { return kills; }
 	public synchronized int getDeaths() { return deaths; }
+	public static int getMediumScore() { return mediumScore; }
 	public synchronized int getScore() { return score; }
 	public synchronized int getPlays() { return plays; }
 	public synchronized int getWins() { return wins; }

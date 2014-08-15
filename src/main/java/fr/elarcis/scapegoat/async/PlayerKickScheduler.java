@@ -53,9 +53,7 @@ public class PlayerKickScheduler extends BukkitRunnable
 			p.kickPlayer(kickMessage);
 		
 		if (Bukkit.getOnlinePlayers().length == 0)
-		{
 			Bukkit.shutdown();
-		}
 	}
 
 }

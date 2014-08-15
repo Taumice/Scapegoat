@@ -275,6 +275,7 @@ public abstract class GameState implements Listener
 		}
 
 		plugin.removeVotemap(id);
+		SGOnline.computeMediumScore();	
 	}
 
 	/**
