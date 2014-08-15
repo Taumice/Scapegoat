@@ -21,7 +21,8 @@ package fr.elarcis.scapegoat;
  * Possible item sets givable to players.
  * @author Lars
  */
-public enum ItemSet {
+public enum ItemSet
+{
 	/**
 	 * Given to every player.
 	 */
