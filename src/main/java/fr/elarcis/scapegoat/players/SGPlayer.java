@@ -287,9 +287,15 @@ public class SGPlayer extends SGOnline
 				{
 					if(!scapegoat.equals(killer))
 					{
-						setScapegoat(getSGPlayer(killer.getUniqueId()), true);
-						plugin.getGameState().rebuildPanel();
-						kColor = ScapegoatPlugin.PLAYER_COLOR;
+						SGPlayer sgkiller = getSGPlayer(killer.getUniqueId());
+						
+						if (sgkiller != null)
+						{
+							setScapegoat(sgkiller, true);
+							plugin.getGameState().rebuildPanel();
+							kColor = ScapegoatPlugin.PLAYER_COLOR;
+						}
+							
 					}
 					
 					Running state = (Running) plugin.getGameState();
