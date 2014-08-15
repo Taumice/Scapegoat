@@ -1,5 +1,23 @@
+/*
+Copyright (C) 2014 Elarcis.fr <contact+dev@elarcis.fr>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package fr.elarcis.scapegoat.gamestate;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -24,21 +42,34 @@ import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
+import fr.elarcis.scapegoat.ItemStuffer;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.players.PlayerType;
 import fr.elarcis.scapegoat.players.SGOnline;
 import fr.elarcis.scapegoat.players.SGPlayer;
 
+/**
+ * Handles events that would occur after the actual game started and be different from default game state.
+ * @author Lars
+ */
 public class Running extends GameState
 {
 	protected static final String nextTP = "Prochain TP :";
 	protected GameModifier modifier;
+	
+	public Running() 
+	{
+		super();
+		modifier = GameModifier.NONE;
+	}
 
 	@Override
 	public GameStateType getType() { return GameStateType.RUNNING; }
@@ -146,7 +177,7 @@ public class Running extends GameState
 				switch (modifier)
 				{
 				case POTION_SPEED:
-					p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 2, true), true);
+					p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 3, true), true);
 					break;
 				case POTION_FIRE:
 					p.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 1, true),
@@ -171,8 +202,20 @@ public class Running extends GameState
 			else
 				p.playSound(p.getLocation(), Sound.WITHER_SPAWN, 10, 1);
 		}
+		
+		SGOnline.computeMediumScore();
 	}
+	
+	/**
+	 * @return if that game has a special behavior. Returns {@link GameModifier#NONE} is the game hasn't started.
+	 */
+	public GameModifier getModifier() { return modifier; }
 
+	/**
+	 * Triggered each time an entity takes damaged by another entity.
+	 * This event is not reserved to players.
+	 * @param e
+	 */
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent e)
 	{
@@ -180,27 +223,42 @@ public class Running extends GameState
 		{
 			UUID damager = ((Player) e.getDamager()).getUniqueId();
 
-			if (SGOnline.getType(damager) == PlayerType.SPECTATOR)
+			if (SGOnline.getSGSpectator(damager) != null)
 				e.setCancelled(true);
-			else if (e.getEntityType() == EntityType.PLAYER && plugin.getTeleportCount() == 0)
+			else if (e.getEntityType() == EntityType.PLAYER)
 			{
 				SGPlayer sgAttacked = SGOnline.getSGPlayer(((Player) e.getEntity()).getUniqueId());
 				SGPlayer sgDamager = SGOnline.getSGPlayer(damager);
-
-				if (sgDamager != null && !sgDamager.hasWeapon() && !sgAttacked.hasWeapon())
+				
+				if (sgAttacked == null || sgDamager == null)
+					return;
+				
+				if(plugin.getTeleportCount() == 0)
 				{
-					sgDamager.addFistWarning(sgAttacked);
-					Player p = Bukkit.getPlayer(damager);
+					if (sgDamager != null && !sgDamager.hasWeapon() && !sgAttacked.hasWeapon())
+					{
+						sgDamager.addFistWarning(sgAttacked);
+						Player p = Bukkit.getPlayer(damager);
 
-					if (p != null)
-						p.sendMessage(ChatColor.DARK_RED + "NE FONCE PAS SUR LES AUTRES JOUEURS SANS ARME !");
+						if (p != null) {
+							p.sendMessage(ChatColor.DARK_RED + "NE FONCE PAS SUR LES AUTRES JOUEURS SANS ARME !");
+							e.setCancelled(true);
+						}
+					}
 				}
+
+				int scoreDiff = Math.max(0, sgAttacked.getScore() - SGOnline.getMediumScore());
+				double handicap = 1. + (scoreDiff / 100.);
+				
+				e.setDamage(e.getDamage() * handicap);
 			}
 		}
 	}
 
-	// TODO: Handle when players take discs from chests.
-
+	/**
+	 * Triggered everytime a player right clicks on a bed.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerBedEnter(PlayerBedEnterEvent e)
 	{
@@ -208,6 +266,10 @@ public class Running extends GameState
 		e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered everytime a player ends breaking a block.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerBreakBlock(BlockBreakEvent e)
 	{
@@ -215,33 +277,79 @@ public class Running extends GameState
 			e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered on a player's death, just before the actual death.
+	 * @param e
+	 */
 	@EventHandler
-	public void onPlayerDeath(PlayerDeathEvent e)
+	public synchronized void onPlayerDeath(PlayerDeathEvent e)
 	{
 		List<ItemStack> drops = e.getDrops();
 		Player p = e.getEntity();
 
 		e.setDeathMessage(ChatColor.YELLOW + e.getDeathMessage());
-
-		if (!SGOnline.getScapegoat().equals(p) && drops.size() > 0)
+		
+		ItemStack book = null;
+		boolean addBook = false;
+		boolean scapegoat = SGOnline.getScapegoat().equals(p);
+		
+		if (!scapegoat && drops.size() > 0)
 		{
 			int stacksToRemove = (int) (drops.size() * 0.8f);
 			Random rand = new Random();
 
 			for (int i = 0; i < stacksToRemove; i++)
-				drops.remove(rand.nextInt(drops.size()));
-		}
-
-		for (ItemStack i : drops)
-			if (i.getType() == Material.JUKEBOX)
 			{
-				drops.remove(i);
-				break;
+				int r = rand.nextInt(drops.size());
+				Material m = drops.get(r).getType();
+				
+				if (m != Material.WRITTEN_BOOK && !m.isRecord())
+					drops.remove(r);
 			}
+		}
 		
+		Iterator<ItemStack> it = drops.iterator();
+
+		while (it.hasNext())
+		{
+			ItemStack item = it.next();
+			
+			switch (item.getType())
+			{
+			case WRITTEN_BOOK:
+				// When a player drops their book, we give the killer a dull book
+				// with the victim's name. Fun !
+				
+				book = new ItemStack(Material.BOOK);
+				BookMeta bookMeta = (BookMeta) item.getItemMeta();
+				
+				if (bookMeta.getTitle().equals(ItemStuffer.MANUAL_TITLE))
+				{
+					ItemMeta meta = book.getItemMeta();
+					
+					meta.setDisplayName(ChatColor.RED + "Livre de " + p.getName());
+					book.setItemMeta(meta);
+					
+					it.remove();
+					addBook = true;
+				}	
+				break;
+			case JUKEBOX:
+				it.remove();
+			default:
+			}
+		}
+		
+		if (addBook)
+			drops.add(book);
+			
 		SGOnline.getSGPlayer(p.getUniqueId()).kill(p.getLastDamageCause());
 	}
 
+	/**
+	 * Triggered each time a player drops an item, may them be alive or dead.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent e)
 	{
@@ -249,6 +357,10 @@ public class Running extends GameState
 			e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered each time a player gets xp orbs. This DOES NOT handles "xp attraction".
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerExpChange(PlayerExpChangeEvent e)
 	{
@@ -268,15 +380,21 @@ public class Running extends GameState
 					+ ScapegoatPlugin.PLAYER_COLOR + SGOnline.getPlayerCount() + ChatColor.RESET + " joueurs restant).");
 	}
 
+	/**
+	 * Triggered each time a player picks up an item from the ground.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent e)
 	{
-		if (SGOnline.getType(e.getPlayer().getUniqueId()) == PlayerType.SPECTATOR)
+		Player p = e.getPlayer();
+		
+		if (SGOnline.getSGSpectator(p.getUniqueId()) != null)
 			e.setCancelled(true);
 
-		SGPlayer player = SGOnline.getSGPlayer(((Player) e.getPlayer()).getUniqueId());
+		SGPlayer player = SGOnline.getSGPlayer(p.getUniqueId());
 
-		if (e.getItem().getItemStack().getType().isRecord())
+		if (player != null && e.getItem().getItemStack().getType().isRecord())
 			player.giveJukebox();
 	}
 
@@ -355,6 +473,10 @@ public class Running extends GameState
 		return secondsLeft;
 	}
 
+	/**
+	 *  Only update the sidebar scoreboard's scores.
+	 * @param secondsLeft How many seconds should the timer display.
+	 */
 	public void updatePanelInfo(int secondsLeft)
 	{
 		Scoreboard board = plugin.getScoreboard();
@@ -363,7 +485,6 @@ public class Running extends GameState
 		if (tp != null)
 			tp.getScore(nextTP).setScore(secondsLeft);
 	}
-
 	@Override
 	public void updatePanelTitle()
 	{

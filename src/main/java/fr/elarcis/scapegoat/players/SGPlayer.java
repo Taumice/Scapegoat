@@ -1,3 +1,20 @@
+/*
+Copyright (C) 2014 Elarcis.fr <contact+dev@elarcis.fr>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package fr.elarcis.scapegoat.players;
 
 import java.util.HashMap;
@@ -24,14 +41,27 @@ import org.bukkit.inventory.ItemStack;
 import fr.elarcis.scapegoat.ItemSet;
 import fr.elarcis.scapegoat.ScapegoatPlugin;
 import fr.elarcis.scapegoat.async.PlayerKickScheduler;
+import fr.elarcis.scapegoat.gamestate.GameModifier;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
+import fr.elarcis.scapegoat.gamestate.Running;
 
+/**
+ * An abstraction layer around standard {@link org.bukkit.entity.Player Entity.Player} class.
+ * Provides operations related to people actually playing a game.
+ * @author Lars
+ */
 public class SGPlayer extends SGOnline
 {
 	protected boolean dead;
 	protected int nFistWarning;
 	protected SGPlayer lastFist;
 
+	/**
+	 * Create a new SGPlayer from a Bukkit player and register them in static maps.
+	 * There should be only ONE {@link SGOnline} per player, as they are remembered via their UUID.
+	 * If you're not sure of that, remove any possible previous {@link SGOnline} before creating one.
+	 * @param p The bukkit player linked to that SGPlayer.
+	 */
 	public SGPlayer(Player player)
 	{
 		super(player);
@@ -60,8 +90,12 @@ public class SGPlayer extends SGOnline
 		}
 
 		join();
+		computeMediumScore();
 	}
 
+	/**
+	 * Teleport a player to another according to the countdown.
+	 */
 	public static synchronized void teleport()
 	{
 		Map<UUID, SGPlayer> candidates = new HashMap<UUID, SGPlayer>(sgPlayers);
@@ -74,14 +108,12 @@ public class SGPlayer extends SGOnline
 
 		// Basic trap detection System
 		
-		t.setNoDamageTicks(80);
-		s.setNoDamageTicks(80);
+		int noDamage = plugin.getNoDamageTicks();
+		
+		t.setNoDamageTicks(noDamage);
+		s.setNoDamageTicks(noDamage);
 
 		Location abs = s.getLocation();
-
-		int pitSize = 5;
-		boolean solidFound = false;
-		boolean lavaFound = false;
 
 		if (!t.isInsideVehicle())
 			t.teleport(s, TeleportCause.PLUGIN);
@@ -93,43 +125,51 @@ public class SGPlayer extends SGOnline
 			t.teleport(s, TeleportCause.PLUGIN);
 			v.setPassenger(t);
 		}
-
-		for (int i = 0; i <= pitSize; i++)
+		
+		int pitSize = plugin.getMaxPitSize();
+		
+		if (pitSize > 0)
 		{
-			Block b = abs.getWorld().getBlockAt(abs.getBlockX(),
-					abs.getBlockY() - i, abs.getBlockZ());
-
-			if (b.getType() == Material.STATIONARY_LAVA
-					|| b.getType() == Material.LAVA)
-			{
-				lavaFound = true;
-				break;
-			}
+			boolean solidFound = false;
+			boolean lavaFound = false;
 			
-			Set<Material> nonSolids = new HashSet<Material>();
-			nonSolids.add(Material.SIGN);
-			nonSolids.add(Material.LADDER);
-			nonSolids.add(Material.TORCH);
-			nonSolids.add(Material.WEB);
-			nonSolids.add(Material.REDSTONE_TORCH_OFF);
-			nonSolids.add(Material.REDSTONE_TORCH_ON);
-			nonSolids.add(Material.AIR);
-
-			if (!nonSolids.contains(b.getType()))
+			for (int i = 0; i < pitSize; i++)
 			{
-				solidFound = true;
-				break;
+				Block b = abs.getWorld().getBlockAt(abs.getBlockX(),
+						abs.getBlockY() - i, abs.getBlockZ());
+
+				if (b.getType() == Material.STATIONARY_LAVA
+						|| b.getType() == Material.LAVA)
+				{
+					lavaFound = true;
+					break;
+				}
+				
+				Set<Material> nonSolids = new HashSet<Material>();
+				nonSolids.add(Material.SIGN);
+				nonSolids.add(Material.LADDER);
+				nonSolids.add(Material.TORCH);
+				nonSolids.add(Material.WEB);
+				nonSolids.add(Material.REDSTONE_TORCH_OFF);
+				nonSolids.add(Material.REDSTONE_TORCH_ON);
+				nonSolids.add(Material.AIR);
+
+				if (!nonSolids.contains(b.getType()))
+				{
+					solidFound = true;
+					break;
+				}
 			}
-		}
 
-		// TODO: BETTER HANDLE THAT TP
+			// TODO: BETTER HANDLE THAT TP
 
-		if (lavaFound || !solidFound)
-		{
-			abs.setX(abs.getBlockX() + 0.5);
-			abs.setZ(abs.getBlockZ() + 0.5);
-			s.teleport(abs);
-			s.setSneaking(false);
+			if (lavaFound || !solidFound)
+			{
+				abs.setX(abs.getBlockX() + 0.5);
+				abs.setZ(abs.getBlockZ() + 0.5);
+				s.teleport(abs);
+				s.setSneaking(false);
+			}
 		}
 
 		plugin.addTeleport();
@@ -143,6 +183,10 @@ public class SGPlayer extends SGOnline
 				+ ScapegoatPlugin.SCAPEGOAT_COLOR + "bouc-émissaire !");
 	}
 
+	/**
+	 * Add a warning to this player in case they fist-rush another one.
+	 * @param victim The player hit by this player.
+	 */
 	public void addFistWarning(SGPlayer victim)
 	{
 		if (!victim.equals(lastFist))
@@ -161,7 +205,7 @@ public class SGPlayer extends SGOnline
 			remove();
 		}
 	}
-
+	
 	@Override
 	public PlayerType getType()
 	{
@@ -171,6 +215,9 @@ public class SGPlayer extends SGOnline
 			return PlayerType.PLAYER;
 	}
 
+	/**
+	 * Give a jukebox to this player with a nice message in case they picked up a record.
+	 */
 	public void giveJukebox()
 	{
 		if (getHasRecord())
@@ -182,6 +229,9 @@ public class SGPlayer extends SGOnline
 		setHasRecord(true);
 	}
 
+	/**
+	 * @return true if the item in the hand of this player is considered as a weapon.
+	 */
 	public boolean hasWeapon()
 	{
 		Material material = getPlayer().getItemInHand().getType();
@@ -203,8 +253,6 @@ public class SGPlayer extends SGOnline
 				|| material == Material.DIAMOND_AXE;
 	}
 
-	public boolean isDead() { return dead; }
-
 	@Override
 	public void join()
 	{
@@ -215,7 +263,12 @@ public class SGPlayer extends SGOnline
 			if (e.getValue().isOnline())
 				getPlayer().hidePlayer(e.getValue().getPlayer());
 	}
-
+	
+	/**
+	 * Consider this player as dead and out of the plugin.<br/>
+	 * It is not equal to a Minecraft death since they can respawn and still be "dead".
+	 * @param cause
+	 */
 	public void kill(EntityDamageEvent cause)
 	{
 		Player killed = Bukkit.getPlayer(id);
@@ -230,23 +283,27 @@ public class SGPlayer extends SGOnline
 			{
 				ChatColor kColor = ScapegoatPlugin.SCAPEGOAT_COLOR;
 
-				if (!scapegoat.equals(killer) && !killer.isDead())
+				if (!killer.isDead())
 				{
-					setScapegoat(getSGPlayer(killer.getUniqueId()), true);
-					plugin.getGameState().rebuildPanel();
-					kColor = ScapegoatPlugin.PLAYER_COLOR;
-				}
-
-				SGPlayer sgkiller = SGOnline.getSGPlayer(killer.getUniqueId());
-				
-				if (sgkiller != null)
-				{
+					if(!scapegoat.equals(killer))
+					{
+						setScapegoat(getSGPlayer(killer.getUniqueId()), true);
+						plugin.getGameState().rebuildPanel();
+						kColor = ScapegoatPlugin.PLAYER_COLOR;
+					}
+					
+					Running state = (Running) plugin.getGameState();
+					
+					if (state.getModifier() == GameModifier.UHC)
+						killer.setHealth(Math.min(20, killer.getHealth() + plugin.getHealthRestoreOnUHC()));
+					
+					SGPlayer sgkiller = SGOnline.getSGPlayer(killer.getUniqueId());
 					sgkiller.setKills(sgkiller.getKills() + 1);
-					sgkiller.setScore(sgkiller.getScore() + 2);			
+					sgkiller.setScore(sgkiller.getScore() + 2);
 				}
 				
 				kickMessage = "Tué par " + kColor + scapegoat.getName()
-						+ ChatColor.RED + " (" + (int) killer.getHealth()
+						+ ChatColor.RED + " (" + (int)Math.ceil(killer.getHealth())
 						+ " PV)" + ChatColor.RESET + ".";
 			} else
 			{

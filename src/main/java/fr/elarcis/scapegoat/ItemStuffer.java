@@ -1,7 +1,25 @@
+/*
+Copyright (C) 2014 Elarcis.fr <contact+dev@elarcis.fr>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package fr.elarcis.scapegoat;
 
 import java.util.Random;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -9,14 +27,21 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import fr.elarcis.scapegoat.players.SGOnline;
-
+/**
+ * Generates common stuff to be given to players via {@link ItemSet}.
+ * @author Lars
+ */
 public class ItemStuffer
 {
+	public static final String MANUAL_TITLE = ChatColor.GREEN + "Règles du jeu";
+	
 	protected ItemStack manual;
 	protected ItemStack manual_bonus;
 	protected ItemStack spectating_compass;
 
+	/**
+	 * Generate common stuff data.
+	 */
 	public ItemStuffer()
 	{
 		String[] mpages = new String[] {
@@ -39,7 +64,7 @@ public class ItemStuffer
 		
 		BookMeta bmeta = (BookMeta) manual.getItemMeta();
 		bmeta.setAuthor("§6E§flarcis");
-		bmeta.setTitle("§aRègles du jeu");
+		bmeta.setTitle(MANUAL_TITLE);
 		bmeta.addPage(mpages);
 		
 		manual.setItemMeta(bmeta);
@@ -52,17 +77,16 @@ public class ItemStuffer
 		spectating_compass = new ItemStack(Material.COMPASS);
 		
 		ItemMeta cMeta = spectating_compass.getItemMeta();
-		cMeta.setDisplayName("§9Menu spectateur");
+		cMeta.setDisplayName(ChatColor.BLUE + "Menu spectateur");
 		
 		spectating_compass.setItemMeta(cMeta);
 	}
 
-	public void stuff(SGOnline player, ItemSet item)
-	{
-		if (player.getPlayer() != null)
-			stuff(player.getPlayer(), item);
-	}
-
+	/**
+	 * Give an item set to a player.
+	 * @param player
+	 * @param item
+	 */
 	public void stuff(Player player, ItemSet item)
 	{
 		PlayerInventory inv = player.getInventory();

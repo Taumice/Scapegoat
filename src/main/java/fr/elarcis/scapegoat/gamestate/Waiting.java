@@ -1,3 +1,20 @@
+/*
+Copyright (C) 2014 Elarcis.fr <contact+dev@elarcis.fr>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package fr.elarcis.scapegoat.gamestate;
 
 import org.bukkit.Bukkit;
@@ -46,12 +63,21 @@ public class Waiting extends GameState
 		countdown = false;
 	}
 
+	/**
+	 * Triggered each time an entity takes damaged by another entity.
+	 * This event is not reserved to players.
+	 * @param e
+	 */
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered everytime a player right clicks on a bed.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerBreakBlock(BlockBreakEvent e)
 	{
@@ -60,18 +86,27 @@ public class Waiting extends GameState
 			e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered each time a player drops an item, may them be alive or dead.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered each time a player's looses or gains food or saturation.
+	 * @param e
+	 */
 	@EventHandler
-	public void onPlayerHunger(FoodLevelChangeEvent e)
+	public void onFoodLevelChange(FoodLevelChangeEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	@Override
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e)
 	{
@@ -83,12 +118,17 @@ public class Waiting extends GameState
 			e.setCancelled(true);
 	}
 	
+	/**
+	 * Triggered each time a player picks up an item from the ground.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	@Override
 	@EventHandler
 	public void onServerListPing(ServerListPingEvent e)
 	{
@@ -118,6 +158,7 @@ public class Waiting extends GameState
 		e.setMotd(motd);
 	}
 
+	@Override
 	public void rebuildPanel()
 	{
 		plugin.getScoreboard().getObjective("panelInfo").unregister();
@@ -175,6 +216,7 @@ public class Waiting extends GameState
 		return this.secondsLeft;
 	}
 
+	@Override
 	public void updatePanelTitle()
 	{
 		Objective mPlayers = plugin.getScoreboard().getObjective("panelInfo");
@@ -187,6 +229,11 @@ public class Waiting extends GameState
 					+ "En attente");
 	}
 
+	/**
+	 * Only update the sidebar scoreboard's scores.
+	 * @param message The message to display as a waiting status.
+	 * @param score How many players or seconds left until the game starts ?
+	 */
 	protected void updatePanelInfo(String message, int score)
 	{
 		updatePanelTitle();

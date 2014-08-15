@@ -5,8 +5,10 @@ maxPlayers: 64
 teleport:
   # Maximum delay between two teleports.
   maxDelay: 300
+  
   # Minimum delay between two teleports.
   minDelay: 90
+  
   # For each player more than the required setting, these seconds will be added to teleport delays.
   # Every killed player causes the delay to decrease again.
   # Teleport delays will still be contained between maxDelay and minDelay.
@@ -14,11 +16,36 @@ teleport:
 
 security:
   # Number of unarmed punches a player can do to another unarmed player until the attacking player is kicked.
+  # 0 to disable.
   maxFistWarnings: 4
   
-# Database settings. Set as needed.
-database:
-  host: localhost
-  port: 3306
-  database: database
-  password: password
+  # Height on which the plugin will search for ground or lava when teleporting players.
+  # This is a common "cheat" where scapegoats bend over a deep pit to kill players without efforts.
+  # 0 to disable.
+  maxPitSize: 5
+  
+  # Number of ticks during which teleporter player and the scapegoat won't be able to hurt themselves.
+  # Used to prevent some cases where teleported player is invisible and kills the scapegoat right away.
+  # 0 to disable.
+  noDamageTicks: 60
+  
+gameplay:
+  # Set a value if you wish that players regain some hearts when killing someone while in UHC modifier.
+  # The value is specified in half-hearts. A value of 5 will only give 2.5 hearts.
+  healthRestoreOnUHC: 0
+  
+# Database settings.
+# Some features REQUIRE a database to work properly. If you don't use one, they just won't
+# show up.
+
+#database:
+#  # Possible values are : none, mysql, sqlite.
+#  engine: none
+#
+#  # The following settings are only used for mysql databases.
+#  # Don't bother to change nor uncomment them if you don't use one.
+#  host: localhost
+#  port: 3306
+#  database: database
+#  user: user
+#  password: password
