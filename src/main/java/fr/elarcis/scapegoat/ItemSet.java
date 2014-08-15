@@ -17,6 +17,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package fr.elarcis.scapegoat;
 
+/**
+ * Possible item sets givable to players.
+ * @author Lars
+ */
 public enum ItemSet {
-	MANUAL, SPECTATOR
+	/**
+	 * Given to every player.
+	 */
+	MANUAL,
+	/**
+	 * Only given to spectators.
+	 */
+	SPECTATOR
 }

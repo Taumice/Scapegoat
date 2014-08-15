@@ -27,8 +27,10 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import fr.elarcis.scapegoat.players.SGOnline;
-
+/**
+ * Generates common stuff to be given to players via {@link ItemSet}.
+ * @author Lars
+ */
 public class ItemStuffer
 {
 	public static final String MANUAL_TITLE = ChatColor.GREEN + "Règles du jeu";
@@ -37,6 +39,9 @@ public class ItemStuffer
 	protected ItemStack manual_bonus;
 	protected ItemStack spectating_compass;
 
+	/**
+	 * Generate common stuff data.
+	 */
 	public ItemStuffer()
 	{
 		String[] mpages = new String[] {
@@ -77,12 +82,11 @@ public class ItemStuffer
 		spectating_compass.setItemMeta(cMeta);
 	}
 
-	public void stuff(SGOnline player, ItemSet item)
-	{
-		if (player.getPlayer() != null)
-			stuff(player.getPlayer(), item);
-	}
-
+	/**
+	 * Give an item set to a player.
+	 * @param player
+	 * @param item
+	 */
 	public void stuff(Player player, ItemSet item)
 	{
 		PlayerInventory inv = player.getInventory();

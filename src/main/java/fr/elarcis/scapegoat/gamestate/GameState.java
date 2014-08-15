@@ -189,9 +189,9 @@ public abstract class GameState implements Listener
 				default:
 				}
 				break;
-				// TODO: Wait for proper replacement of getLineOfSight().
 			// case LEFT_CLICK_AIR:
 			// case LEFT_CLICK_BLOCK:
+				// TODO: Wait for proper replacement of getLineOfSight() in order to use the compass as a teleporter.
 			default:
 			}
 		}
@@ -204,7 +204,7 @@ public abstract class GameState implements Listener
 	}
 
 	/**
-	 * Triggered when a player succeeded at connecting to the server.
+	 * Triggered when a player SUCCEEDS at connecting to the server.
 	 * @param e
 	 */
 	@EventHandler
@@ -232,7 +232,7 @@ public abstract class GameState implements Listener
 	}
 
 	/**
-	 * Triggered when a player tries to join the server.
+	 * Triggered when a player TRIES to join the server.
 	 * @param e
 	 */
 	@EventHandler

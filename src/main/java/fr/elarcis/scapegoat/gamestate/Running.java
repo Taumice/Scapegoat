@@ -56,10 +56,20 @@ import fr.elarcis.scapegoat.players.PlayerType;
 import fr.elarcis.scapegoat.players.SGOnline;
 import fr.elarcis.scapegoat.players.SGPlayer;
 
+/**
+ * Handles events that would occur after the actual game started and be different from default game state.
+ * @author Lars
+ */
 public class Running extends GameState
 {
 	protected static final String nextTP = "Prochain TP :";
 	protected GameModifier modifier;
+	
+	public Running() 
+	{
+		super();
+		modifier = GameModifier.NONE;
+	}
 
 	@Override
 	public GameStateType getType() { return GameStateType.RUNNING; }
@@ -196,8 +206,16 @@ public class Running extends GameState
 		SGOnline.computeMediumScore();
 	}
 	
+	/**
+	 * @return if that game has a special behavior. Returns {@link GameModifier#NONE} is the game hasn't started.
+	 */
 	public GameModifier getModifier() { return modifier; }
 
+	/**
+	 * Triggered each time an entity takes damaged by another entity.
+	 * This event is not reserved to players.
+	 * @param e
+	 */
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent e)
 	{
@@ -237,6 +255,10 @@ public class Running extends GameState
 		}
 	}
 
+	/**
+	 * Triggered everytime a player right clicks on a bed.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerBedEnter(PlayerBedEnterEvent e)
 	{
@@ -244,6 +266,10 @@ public class Running extends GameState
 		e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered everytime a player ends breaking a block.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerBreakBlock(BlockBreakEvent e)
 	{
@@ -251,6 +277,10 @@ public class Running extends GameState
 			e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered on a player's death, just before the actual death.
+	 * @param e
+	 */
 	@EventHandler
 	public synchronized void onPlayerDeath(PlayerDeathEvent e)
 	{
@@ -316,6 +346,10 @@ public class Running extends GameState
 		SGOnline.getSGPlayer(p.getUniqueId()).kill(p.getLastDamageCause());
 	}
 
+	/**
+	 * Triggered each time a player drops an item, may them be alive or dead.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent e)
 	{
@@ -323,6 +357,10 @@ public class Running extends GameState
 			e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered each time a player gets xp orbs. This DOES NOT handles "xp attraction".
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerExpChange(PlayerExpChangeEvent e)
 	{
@@ -342,6 +380,10 @@ public class Running extends GameState
 					+ ScapegoatPlugin.PLAYER_COLOR + SGOnline.getPlayerCount() + ChatColor.RESET + " joueurs restant).");
 	}
 
+	/**
+	 * Triggered each time a player picks up an item from the ground.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent e)
 	{
@@ -431,6 +473,10 @@ public class Running extends GameState
 		return secondsLeft;
 	}
 
+	/**
+	 *  Only update the sidebar scoreboard's scores.
+	 * @param secondsLeft How many seconds should the timer display.
+	 */
 	public void updatePanelInfo(int secondsLeft)
 	{
 		Scoreboard board = plugin.getScoreboard();
@@ -439,7 +485,6 @@ public class Running extends GameState
 		if (tp != null)
 			tp.getScore(nextTP).setScore(secondsLeft);
 	}
-
 	@Override
 	public void updatePanelTitle()
 	{

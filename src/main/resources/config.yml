@@ -42,7 +42,8 @@ gameplay:
 #  # Possible values are : none, mysql, sqlite.
 #  engine: none
 #
-#  # The following settings are only used for mysql databases. Don't bother to change them if you don't use one.
+#  # The following settings are only used for mysql databases.
+#  # Don't bother to change nor uncomment them if you don't use one.
 #  host: localhost
 #  port: 3306
 #  database: database

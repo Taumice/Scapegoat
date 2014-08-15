@@ -35,9 +35,19 @@ import org.bukkit.scoreboard.Team;
 
 import fr.elarcis.scapegoat.ItemSet;
 
+/**
+ * An abstraction layer around standard {@link org.bukkit.entity.Player Entity.Player} class.
+ * Provides operations related to people watching the game but not playing it.
+ * @author Lars
+ */
 public class SGSpectator extends SGOnline
 {
-
+	/**
+	 * Create a new SGSpectator from a Bukkit player and register them in static maps.
+	 * There should be only ONE {@link SGOnline} per player, as they are remembered via their UUID.
+	 * If you're not sure of that, remove any possible previous {@link SGOnline} before creating one.
+	 * @param p The bukkit player linked to that SGSpectator.
+	 */
 	public SGSpectator(Player player)
 	{
 		super(player);
@@ -47,11 +57,13 @@ public class SGSpectator extends SGOnline
 		join();
 	}
 
+	@Override
 	public PlayerType getType()
 	{
 		return PlayerType.SPECTATOR;
 	}
 
+	@Override
 	public void join()
 	{
 		super.join();
@@ -69,6 +81,9 @@ public class SGSpectator extends SGOnline
 		}
 	}
 
+	/**
+	 * Display the spectator menu to this player.
+	 */
 	public void openInventory()
 	{
 		int cells = Math.min(
@@ -138,6 +153,7 @@ public class SGSpectator extends SGOnline
 		getPlayer().openInventory(panel);
 	}
 
+	@Override
 	public void remove()
 	{		
 		if (sgSpectators.remove(id) == null || !isOnline())
@@ -159,6 +175,9 @@ public class SGSpectator extends SGOnline
 		super.remove();
 	}
 
+	/**
+	 * Give spectator stuff to this player when they respawn.
+	 */
 	public void respawn()
 	{
 		Player p = getPlayer();
@@ -172,6 +191,11 @@ public class SGSpectator extends SGOnline
 		p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 0));
 	}
 
+	/**
+	 * Teleport this player to another based on their name,
+	 * since a {@link Material#SKULL_ITEM} cannot store an UUID yet.
+	 * @param player The target player.
+	 */
 	public void teleport(String player)
 	{
 		Player p = Bukkit.getPlayer(plugin.getUuid(player));

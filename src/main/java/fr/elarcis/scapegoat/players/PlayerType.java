@@ -17,6 +17,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package fr.elarcis.scapegoat.players;
 
+/**
+ * Possible types of players connected to the server and manageable via {@link SGOnline}.
+ * @author Lars
+ */
 public enum PlayerType {
-	PLAYER, SPECTATOR, SCAPEGOAT, UNKNOWN
+	/**
+	 * An actual scapegoat player, participating to the game.
+	 */
+	PLAYER,
+	/**
+	 * Like {@link #PLAYER}, but designed as the scapegoat.
+	 * If you don't know what a scapegoat is, you shouldn't be reading this code.
+	 */
+	SCAPEGOAT,
+	/**
+	 * Not a player, invisible to players and unable to interact with them.
+	 */
+	SPECTATOR,
+	/**
+	 * Explicit placeholder type, I'm not even sure I use it anywhere.
+	 */
+	UNKNOWN
 }

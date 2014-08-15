@@ -63,12 +63,21 @@ public class Waiting extends GameState
 		countdown = false;
 	}
 
+	/**
+	 * Triggered each time an entity takes damaged by another entity.
+	 * This event is not reserved to players.
+	 * @param e
+	 */
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered everytime a player right clicks on a bed.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerBreakBlock(BlockBreakEvent e)
 	{
@@ -77,18 +86,27 @@ public class Waiting extends GameState
 			e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered each time a player drops an item, may them be alive or dead.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	/**
+	 * Triggered each time a player's looses or gains food or saturation.
+	 * @param e
+	 */
 	@EventHandler
-	public void onPlayerHunger(FoodLevelChangeEvent e)
+	public void onFoodLevelChange(FoodLevelChangeEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	@Override
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e)
 	{
@@ -100,12 +118,17 @@ public class Waiting extends GameState
 			e.setCancelled(true);
 	}
 	
+	/**
+	 * Triggered each time a player picks up an item from the ground.
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent e)
 	{
 		e.setCancelled(true);
 	}
 
+	@Override
 	@EventHandler
 	public void onServerListPing(ServerListPingEvent e)
 	{
@@ -135,6 +158,7 @@ public class Waiting extends GameState
 		e.setMotd(motd);
 	}
 
+	@Override
 	public void rebuildPanel()
 	{
 		plugin.getScoreboard().getObjective("panelInfo").unregister();
@@ -192,6 +216,7 @@ public class Waiting extends GameState
 		return this.secondsLeft;
 	}
 
+	@Override
 	public void updatePanelTitle()
 	{
 		Objective mPlayers = plugin.getScoreboard().getObjective("panelInfo");
@@ -204,6 +229,11 @@ public class Waiting extends GameState
 					+ "En attente");
 	}
 
+	/**
+	 * Only update the sidebar scoreboard's scores.
+	 * @param message The message to display as a waiting status.
+	 * @param score How many players or seconds left until the game starts ?
+	 */
 	protected void updatePanelInfo(String message, int score)
 	{
 		updatePanelTitle();

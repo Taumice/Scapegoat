@@ -45,12 +45,23 @@ import fr.elarcis.scapegoat.gamestate.GameModifier;
 import fr.elarcis.scapegoat.gamestate.GameStateType;
 import fr.elarcis.scapegoat.gamestate.Running;
 
+/**
+ * An abstraction layer around standard {@link org.bukkit.entity.Player Entity.Player} class.
+ * Provides operations related to people actually playing a game.
+ * @author Lars
+ */
 public class SGPlayer extends SGOnline
 {
 	protected boolean dead;
 	protected int nFistWarning;
 	protected SGPlayer lastFist;
 
+	/**
+	 * Create a new SGPlayer from a Bukkit player and register them in static maps.
+	 * There should be only ONE {@link SGOnline} per player, as they are remembered via their UUID.
+	 * If you're not sure of that, remove any possible previous {@link SGOnline} before creating one.
+	 * @param p The bukkit player linked to that SGPlayer.
+	 */
 	public SGPlayer(Player player)
 	{
 		super(player);
@@ -82,6 +93,9 @@ public class SGPlayer extends SGOnline
 		computeMediumScore();
 	}
 
+	/**
+	 * Teleport a player to another according to the countdown.
+	 */
 	public static synchronized void teleport()
 	{
 		Map<UUID, SGPlayer> candidates = new HashMap<UUID, SGPlayer>(sgPlayers);
@@ -169,6 +183,10 @@ public class SGPlayer extends SGOnline
 				+ ScapegoatPlugin.SCAPEGOAT_COLOR + "bouc-émissaire !");
 	}
 
+	/**
+	 * Add a warning to this player in case they fist-rush another one.
+	 * @param victim The player hit by this player.
+	 */
 	public void addFistWarning(SGPlayer victim)
 	{
 		if (!victim.equals(lastFist))
@@ -187,7 +205,7 @@ public class SGPlayer extends SGOnline
 			remove();
 		}
 	}
-
+	
 	@Override
 	public PlayerType getType()
 	{
@@ -197,6 +215,9 @@ public class SGPlayer extends SGOnline
 			return PlayerType.PLAYER;
 	}
 
+	/**
+	 * Give a jukebox to this player with a nice message in case they picked up a record.
+	 */
 	public void giveJukebox()
 	{
 		if (getHasRecord())
@@ -208,6 +229,9 @@ public class SGPlayer extends SGOnline
 		setHasRecord(true);
 	}
 
+	/**
+	 * @return true if the item in the hand of this player is considered as a weapon.
+	 */
 	public boolean hasWeapon()
 	{
 		Material material = getPlayer().getItemInHand().getType();
@@ -229,8 +253,6 @@ public class SGPlayer extends SGOnline
 				|| material == Material.DIAMOND_AXE;
 	}
 
-	public boolean isDead() { return dead; }
-
 	@Override
 	public void join()
 	{
@@ -241,7 +263,12 @@ public class SGPlayer extends SGOnline
 			if (e.getValue().isOnline())
 				getPlayer().hidePlayer(e.getValue().getPlayer());
 	}
-
+	
+	/**
+	 * Consider this player as dead and out of the plugin.<br/>
+	 * It is not equal to a Minecraft death since they can respawn and still be "dead".
+	 * @param cause
+	 */
 	public void kill(EntityDamageEvent cause)
 	{
 		Player killed = Bukkit.getPlayer(id);

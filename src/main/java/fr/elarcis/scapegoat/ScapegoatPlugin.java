@@ -48,6 +48,11 @@ import fr.elarcis.scapegoat.players.SGOnline;
 import fr.elarcis.scapegoat.players.SGPlayer;
 import fr.elarcis.scapegoat.players.SGSpectator;
 
+/**
+ * The main Scapegoat class.<br/>
+ * Handles every setting and general operation related to the plugin itself and not the games.
+ * @author Lars
+ */
 public final class ScapegoatPlugin extends JavaPlugin
 {
 	protected boolean running;
@@ -87,8 +92,15 @@ public final class ScapegoatPlugin extends JavaPlugin
 	protected Database database;
 	protected Connection dbConnect;
 
+	/**
+	 * Add a teleport to the teleport counter.
+	 */
 	public void addTeleport() { nTeleport++; }
 
+	/**
+	 * Create and register a {@link SGOnline} based on a Bukkit player.
+	 * @param p
+	 */
 	public void createSGPlayer(Player p)
 	{
 		SGOnline newPlayer = null;
@@ -114,6 +126,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 		}
 	}
 
+	/**
+	 * End the game and kick everyone !
+	 * @param winner
+	 */
 	public void endGame(SGPlayer winner)
 	{
 		if (winner != null)
@@ -158,33 +174,100 @@ public final class ScapegoatPlugin extends JavaPlugin
 		}
 	}
 
-	public void forceTimer(int secondsLeft) { timer.setSecondsLeft(secondsLeft); }
-
+	/**
+	 * @return The plugin's database, if configured, null otherwise.
+	 */
 	public synchronized Database getDb() { return database; }
 	
+	/**
+	 * @return true if the game should start right away.
+	 */
 	public boolean getForceStart() { return forceStart; }
+	
+	/**
+	 * @return the current game state.
+	 */
 	public GameState getGameState() { return state; }
+	
+	/**
+	 * @return How many HP should be given to player who kill someone when in UHC modifier.
+	 */
 	public int getHealthRestoreOnUHC() { return healthRestoreOnUHC; }
+	
+	/**
+	 * @return the type of the current game state.
+	 */
 	public synchronized GameStateType getGameStateType() { return state.getType(); }
 	
+	/**
+	 * @return the message to display when in maintenance mode.
+	 */
 	public String getMaintenanceMessage() { return maintenanceModeMessage; }
 	
+	/**
+	 * @return How many hits until a kick for fist-rush ?
+	 */
 	public int getMaxFistWarning() { return maxFistWarnings; }
+	
+	/**
+	 * @return How many blocks to check for pit or lava traps ?
+	 */
 	public int getMaxPitSize() { return maxPitSize; }
+	
+	/**
+	 * @return How many players are allowed to connect.
+	 * That value can be overriden if spectators change team.
+	 */
 	public int getMaxPlayers() { return maxPlayers; }
+	
+	/**
+	 * @return Invincibility time after a teleportation.
+	 */
 	public int getNoDamageTicks() { return noDamageTicks; }
+	
+	/**
+	 * @return The minimum amount of players to start a game.
+	 * Can be overriden with {@link ScapegoatPlugin#forceStartCommand()}.
+	 */
 	public int getPlayersRequired() { return playersRequired; }
 	
+	/**
+	 * @return the scoreboard used by the plugin.
+	 * Is not accessible from ingame commands.
+	 */
 	public Scoreboard getScoreboard() { return scoreboard; }
 	
+	/**
+	 * @return the stuffer that possesses stuff data to give to players.
+	 */
 	public ItemStuffer getStuffer() { return stuffer; }
 	
+	/**
+	 * @return the number of teleports since the beginning of the game.
+	 */
 	public int getTeleportCount() { return nTeleport; }
+	
+	/**
+	 * @return the next teleporter delay that will be set on countdown end.
+	 */
 	public int getTeleporterDelay() { return teleporterDelay; }
+	
+	/**
+	 * @return how many seconds to wait until a game starts from the moment enough players are connected.
+	 */
 	public int getWaitBeforeStart() { return waitBeforeStart; }
 
+	/**
+	 * Get a player's UUID from their name. The value is fetched from a local database resetted at each reload,
+	 * so it should NOT be used to fetch offline player's UUID.
+	 * @param player
+	 * @return
+	 */
 	public UUID getUuid(String player) { return this.nameToUuid.get(player); }
 
+	/**
+	 * @return how many valid votemaps have been emitted.
+	 */
 	public int getVotemaps()
 	{
 		int total = 0;
@@ -197,20 +280,33 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return total;
 	}
 
+	/**
+	 * @return how many votemaps are required to change the map at game start.
+	 */
 	public int getVotemapsRequired()
 	{
 		return (Math.max(SGOnline.getPlayerCount(), getPlayersRequired()) / 2) + 1;
 	}
 
+	/**
+	 * Log a message to the console. Not visible to players.
+	 * @param message
+	 */
 	public void info(String message) { getLogger().info(message); }
 	
+	/**
+	 * Init the database connection according to plugin settings.
+	 */
 	protected void initDatabase()
 	{
 		String engine = getConfig().getString("database.engine");
 		
 		if (engine.equals("none"))
 			database = null;
-		else if (engine.equals("mysql"))
+		else 
+		{
+			if (engine.equals("mysql"))
+	
 			database = new MySQL(this,
 					getConfig().getString("database.host"),
 					getConfig().getString("database.port"),
@@ -218,13 +314,36 @@ public final class ScapegoatPlugin extends JavaPlugin
 					getConfig().getString("database.user"),
 					getConfig().getString("database.password")
 					);
-		else if (engine.equals("sqlite"))
-			database = new SQLite(this, "data.db");
+			else if (engine.equals("sqlite"))
+				database = new SQLite(this, "data.db");
+			
+			try
+			{
+				database.openConnection();
+			}
+			catch (ClassNotFoundException e)
+			{
+				e.printStackTrace();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 
+	/**
+	 * @return Is the plugin in maintenance mode ?
+	 */
 	public boolean isInMaintenanceMode() { return maintenanceMode; }
+	
+	/**
+	 * Should {@link TimerThread} continue running ?
+	 * @return
+	 */
 	public synchronized boolean isRunning() { return running; }
 
+	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
 	{
 		String lCmd = cmd.getName().toLowerCase();
@@ -266,6 +385,12 @@ public final class ScapegoatPlugin extends JavaPlugin
 		}
 	}
 	
+	/**
+	 * Switch a player between {@link PlayerType#PLAYER} and {@link PlayerType#SPECTATOR}.
+	 * @param player
+	 * @param mode
+	 * @return an error message if the command fails, "" otherwise.
+	 */
 	public String spectateCommand(String player, String mode)
 	{
 		Player p = Bukkit.getPlayer(getUuid(player));
@@ -301,6 +426,11 @@ public final class ScapegoatPlugin extends JavaPlugin
 			return "Syntaxe incorrecte.";
 	}
 
+	/**
+	 * Vote to change the map at game start.
+	 * @param voter
+	 * @return an error message if the command fails, "" otherwise.
+	 */
 	public String voteMapCommand(Player voter)
 	{
 		if (getGameStateType() != GameStateType.WAITING)
@@ -318,6 +448,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 			return "Vous avez déjà voté >:c";
 	}
 	
+	/**
+	 * Force the game start. 
+	 * @return an error message if the command fails, "" otherwise.
+	 */
 	public String forceStartCommand()
 	{
 		if (getGameStateType() != GameStateType.WAITING)
@@ -330,6 +464,12 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return "";
 	}
 	
+	/**
+	 * Set maintenance mode.
+	 * @param mode
+	 * @param msg
+	 * @return an error message if the command fails, "" otherwise.
+	 */
 	public String setMaintenanceModeCommand(String mode, String msg)
 	{
 		if (mode.equals("on"))
@@ -348,6 +488,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 		return "";
 	}
 
+	@Override
 	public void onDisable()
 	{
 		try
@@ -361,6 +502,7 @@ public final class ScapegoatPlugin extends JavaPlugin
 		stop();
 	}
 
+	@Override
 	public void onEnable()
 	{
 		saveDefaultConfig();
@@ -408,13 +550,25 @@ public final class ScapegoatPlugin extends JavaPlugin
 		start();
 	}
 
+	/**
+	 * Save a player's UUID to the local temporary database.
+	 * @param player
+	 */
 	public void putPlayer(Player player)
 	{
 		this.nameToUuid.put(player.getName(), player.getUniqueId());
 	}
 
+	/**
+	 * Delete an invalid votemap (on player disconnection, i.e.)
+	 * @param player
+	 */
 	public void removeVotemap(UUID player) { nVotemap.remove(player); }
 	
+	/**
+	 * Change the current game state.
+	 * @param gametype
+	 */
 	public synchronized void setGameState(GameStateType gametype)
 	{
 		if (this.state != null)
@@ -437,6 +591,9 @@ public final class ScapegoatPlugin extends JavaPlugin
 		this.state.init();
 	}
 
+	/**
+	 * Start {@link TimerThread}.
+	 */
 	public synchronized void start()
 	{
 		if (running)
@@ -446,6 +603,9 @@ public final class ScapegoatPlugin extends JavaPlugin
 		timer.start();
 	}
 
+	/**
+	 * Set {@link TimerThread} to stop at next iteration.
+	 */
 	public synchronized void stop()
 	{
 		if (!running)
@@ -454,6 +614,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 		running = false;
 	}
 
+	/**
+	 * Executed around each second via {@link TimerThread#run}.
+	 * @param secondsLeft How many seconds to display in the countdown panel.
+	 */
 	public synchronized void timerTick(int secondsLeft)
 	{
 		timer.setSecondsLeft(state.timerTick(secondsLeft));
@@ -484,6 +648,10 @@ public final class ScapegoatPlugin extends JavaPlugin
 		}
 	}
 
+	/**
+	 * Recompute teleporter delay, mainly because of a change in the number of players.
+	 * @return the new delay, in seconds.
+	 */
 	public int updateTeleporterDelay()
 	{
 		int substract = Math.max(SGOnline.getPlayerCount() - 3, 0);
