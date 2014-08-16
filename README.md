@@ -9,11 +9,11 @@ A Bukkit PvP plugin all about fun and teleportations !
 * If you kill someone, you become the scapegoat !
 * At the end of the countdown, a random player is teleported to the scapegoat !
 * If the scapegoat dies alone, a new scapegoat is randomly selected !
-* Many special cases and secret rules I am to exhausted to tell you about.
+* Many special cases and secret rules I am too exhausted to tell you about.
 
 ### DISCLAIMER ###
 
-I do not provide support for this plugin, and release its code source "as is" and as specified by the GNU General Public License. You're free to use it for your own server, but you'll have to figure out how to do it yourself. You're a coder, aren't you ? Aw, to bad.
+I do not provide support for this plugin, and release its code source "as is" and as specified by the GNU General Public License. You're free to use it for your own server, but you'll have to figure out how to do it yourself. You're a coder, aren't you ? Aw, too bad. More details in the COPYING file.
 
 ### Pourquoi tout est écrit en anglais ? ###
 
