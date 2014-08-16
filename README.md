@@ -13,7 +13,7 @@ A Bukkit PvP plugin all about fun and teleportations !
 
 ### DISCLAIMER ###
 
-I do not provide support for this plugin, and release its code source "as is" and as specified by the GNU General Public License. You're free to use it for your own server, but you'll have to figure out how to do it yourself. You're a coder, aren't you ? Aw, too bad.
+I do not provide support for this plugin, and release its code source "as is" and as specified by the GNU General Public License. You're free to use it for your own server, but you'll have to figure out how to do it yourself. You're a coder, aren't you ? Aw, too bad. More details in the COPYING file.
 
 ### Pourquoi tout est écrit en anglais ? ###
 
